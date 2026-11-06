@@ -1,0 +1,36 @@
+[agent]
+# Paths are relative to this config file. Use --repo to select one repository.
+roots = ["~/Projects"]
+report_dir = "reports"
+model = "qwen3.5:9b"
+# Supported by this example model; omit for models without a thinking toggle.
+think = false
+ollama_url = "http://127.0.0.1:11434"
+num_ctx = 16384
+num_predict = 4096
+max_diff_chars = 24000
+max_command_output_chars = 12000
+command_timeout_seconds = 900
+llm_timeout_seconds = 600
+include_untracked_names = true
+
+discovery_exclude_dirs = [
+  "deploy", "deploy-*", "publish", "bin", "obj", "artifacts",
+  "dist", "out", "backup", "archive",
+]
+
+[context]
+# Explicit opt-in only. No neighbouring repositories or environment are searched.
+enabled = false
+# path = "./project-context"
+max_chars = 12000
+
+[source_review]
+enabled = true
+max_chars = 96000
+max_files = 16
+max_file_chars = 16000
+followup_enabled = true
+followup_max_files = 8
+followup_max_chars = 48000
+critic_enabled = true

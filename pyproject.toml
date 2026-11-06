@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools==84.2.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "local-llm-code-auditor"
+version = "0.1.0"
+description = "Evidence-first repository audits with deterministic analyzers and a local Ollama review pipeline"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{name = "Lorenzo Bacci"}]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==9.2.0", "ruff==0.17.4", "build==1.6.1", "pip-audit==2.10.1"]
+
+[project.urls]
+Homepage = "https://github.com/lorenzobacci20/local-llm-code-auditor"
+Issues = "https://github.com/lorenzobacci20/local-llm-code-auditor/issues"
+
+[project.scripts]
+local-llm-code-auditor = "local_llm_code_auditor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "B"]
