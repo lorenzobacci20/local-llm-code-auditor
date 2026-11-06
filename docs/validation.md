@@ -30,9 +30,10 @@ No recall, precision, throughput
 benchmark or comparative critic improvement is claimed.
 
 The optional Windows scheduler has not been installed during this validation, nor
-has the macOS launchd template. Linux/Windows runtime behavior and remote GitHub
-Actions results remain pending the first published CI run. No public CI success is
-claimed before that run exists.
+has the macOS launchd template. [GitHub Actions run 42300694713](https://github.com/lorenzobacci20/local-llm-code-auditor/actions/runs/42300694713)
+passed for application commit `c32eccb3bbe56e8e44c27f893ed0272234e9c6f7`: all six
+Linux/macOS/Windows × Python 3.11/3.13 jobs and the Gitleaks history/tree job succeeded.
+The current commit status is available from the repository Actions tab and README badge.
 
 Gitleaks and manual review reduce publication risk but are not proof of absence of
 all sensitive information. Generated reports remain private by default, and the

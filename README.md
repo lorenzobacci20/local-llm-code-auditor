@@ -1,5 +1,7 @@
 # Local LLM Code Auditor
 
+[![CI](https://github.com/lorenzobacci20/local-llm-code-auditor/actions/workflows/ci.yml/badge.svg)](https://github.com/lorenzobacci20/local-llm-code-auditor/actions/workflows/ci.yml)
+
 **Evidence-first code review for Git repositories, powered by a local Ollama model.**
 
 Build logs and passing tests cannot explain every defect. Sending an entire codebase
