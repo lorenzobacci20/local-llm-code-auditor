@@ -24,6 +24,7 @@ jobs:
       - run: python -m build
       - run: local-llm-code-auditor --help
       - run: python scripts/demo.py
+      - run: python scripts/evaluate.py --output evaluation-runs/ci
       - name: Parse PowerShell scripts
         if: runner.os == 'Windows'
         shell: pwsh

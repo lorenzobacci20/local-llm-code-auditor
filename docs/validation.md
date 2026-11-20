@@ -1,5 +1,28 @@
 # Release validation
 
+## Evaluation starter — 2026-11-20
+
+Checked on Linux x86_64 with CPython 3.12.14 in an isolated development installation.
+This is validation of the runner and its deterministic expectations; no new Ollama
+run or model-quality measurement was performed for this change.
+
+| Check | Observed result |
+| --- | --- |
+| `python -m pytest -q` | 76 tests passed, zero skipped, including nine evaluation-runner checks |
+| `python -m ruff check .` and `python -m ruff format --check .` | Passed |
+| `python -m build` | Wheel and source distribution built |
+| `python scripts/demo.py` | Existing deterministic demo passed |
+| `python scripts/evaluate.py --output evaluation-runs/local-validation` | All six cases completed; deterministic rule expectations matched; every LLM-quality field remained `NOT_EVALUATED` |
+| Failure-path regression checks | Missing Git, subprocess timeout, CLI failure, critic fallback and preservation of an existing output directory checked |
+
+The evaluation fixture's C# is read as source, not compiled or executed by this
+runner. Semantic model findings require the manual review described in
+[evaluation.md](evaluation.md). CI additionally runs the deterministic evaluation
+command on the configured OS/Python matrix; inspect the exact commit's Actions run
+for remote results.
+
+## Initial release — 2026-11-06
+
 Validation date: **2026-11-06**. Local environment: macOS arm64, Git 2.50.1,
 CPython 3.11.18 and 3.13.18. No private repository or credential is needed to run the tests.
 

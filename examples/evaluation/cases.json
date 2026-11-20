@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "c01",
+      "pair": "p01",
+      "topic": "Production configuration",
+      "expected_rule_ids": ["ASPNET_PROD_DETAILED_ERRORS", "ASPNET_PROD_LOCALHOST", "ASPNET_PROD_VERBOSE_LOGGING"],
+      "expected_behavior": "Production settings should disable detailed errors, use a non-loopback API address and avoid Debug logging.",
+      "review_rubric": "Three intentionally configured risks. Their deterministic detection is evaluated separately from the model. Any additional LLM claim must have concrete evidence."
+    },
+    {
+      "id": "c02",
+      "pair": "p01",
+      "topic": "Production configuration",
+      "expected_rule_ids": [],
+      "expected_behavior": "DetailedErrors is false, the reserved example-domain endpoint is non-loopback, and default logging is Warning.",
+      "review_rubric": "The three configuration risks from c01 are absent. Do not count invented configuration risks or requests to test the fictional endpoint as correct findings."
+    },
+    {
+      "id": "c03",
+      "pair": "p02",
+      "topic": "Per-item calculation",
+      "expected_rule_ids": [],
+      "expected_behavior": "Quantity zero must be rejected with ArgumentOutOfRangeException before dividing the non-negative total.",
+      "review_rubric": "PricingService.Calculate(10m, 0) passes the quantity < 0 guard and divides by zero. A correct semantic finding identifies the zero boundary and the missing <= 0 guard; merely recommending generic validation is insufficient."
+    },
+    {
+      "id": "c04",
+      "pair": "p02",
+      "topic": "Per-item calculation",
+      "expected_rule_ids": [],
+      "expected_behavior": "Non-positive quantities are rejected before division; valid positive quantities yield the per-item price.",
+      "review_rubric": "The quantity <= 0 guard prevents the c03 defect. A zero-division finding that ignores this guard is unsupported. This does not certify unrelated behavior."
+    },
+    {
+      "id": "c05",
+      "pair": "p03",
+      "topic": "Quantity discount",
+      "expected_rule_ids": [],
+      "expected_behavior": "Ten or more items receive a ten percent discount: Calculate(10m, 10) must return 90m.",
+      "review_rubric": "The quantity > 10 condition excludes the documented boundary of ten and returns 100m. A correct finding identifies that threshold and its consequence."
+    },
+    {
+      "id": "c06",
+      "pair": "p03",
+      "topic": "Quantity discount",
+      "expected_rule_ids": [],
+      "expected_behavior": "Ten items receive the discount; nine do not. Calculate(10m, 10) returns 90m and Calculate(10m, 9) returns 90m before any discount.",
+      "review_rubric": "The quantity >= 10 condition matches the documented threshold. Inventing a threshold defect is unsupported. This does not certify unrelated behavior."
+    }
+  ]
+}

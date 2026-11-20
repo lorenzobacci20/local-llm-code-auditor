@@ -18,4 +18,5 @@ build/
 *.sqlite*
 *.db
 demo-workspace/
+evaluation-runs/
 *.egg-info/
