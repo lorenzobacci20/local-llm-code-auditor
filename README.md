@@ -14,6 +14,20 @@ and source sampling work across languages; the specialized deterministic analyze
 currently target **.NET, ASP.NET Core and EF Core**. It does not generate patches or
 change source control.
 
+## See what a review looks like
+
+- **[Guided walkthrough](docs/walkthrough.md):** inspect the synthetic input, the
+  three configuration findings and the limits of the optional model review.
+- **[Example report](docs/example-report.md):** real deterministic output, with
+  temporary paths and identifiers normalized.
+- **[Evaluation starter](docs/evaluation.md):** six synthetic cases in defective /
+  corrected pairs, a repeatable runner and a manual rubric for model findings.
+
+The default demo and evaluation need only Python and Git. They run the actual CLI
+on isolated synthetic repositories, with builds and external project context disabled.
+The optional Ollama runs preserve their reports for inspection; model completion and
+finding correctness are recorded as separate questions.
+
 ## What is implemented
 
 - Git repository validation/discovery, status, staged/unstaged diffs and recent commits.
@@ -102,6 +116,31 @@ zero-quantity division defect for the model to inspect. Model findings can vary;
 the deterministic demo assertions are reproducible. Model selection and memory
 tradeoffs are documented in [model configuration](docs/model-profiles.md).
 
+## Evaluate findings on paired examples
+
+After installation, list the cases or run all six without a model:
+
+```sh
+python scripts/evaluate.py --list
+python scripts/evaluate.py --output evaluation-runs/deterministic
+```
+
+Each case has a fresh Git repository, its own report and a run record. The known
+answers stay outside the repository sent to the model. The deterministic check
+compares analyzer findings with the case's expected rules; semantic review remains
+explicitly **NOT_EVALUATED** until a person assesses the findings.
+
+To collect real local-model reports:
+
+```sh
+python scripts/evaluate.py --llm --model qwen3.5:9b --thinking off --critic on --output evaluation-runs/llm-critic
+```
+
+Every output directory must be new. Use a separate directory and `--critic off`
+for a comparison with the same model and other settings. Read the
+[evaluation guide](docs/evaluation.md) for the scoring rubric, timeout behavior and
+limitations. Six small synthetic cases do not establish general model accuracy.
+
 ## CLI and configuration
 
 ```text
@@ -148,6 +187,7 @@ python -m ruff check .
 python -m ruff format --check .
 python -m build
 python scripts/demo.py
+python scripts/evaluate.py --output evaluation-runs/validation
 ```
 
 Tests use synthetic files and temporary Git repositories; no credentials or private
@@ -194,7 +234,8 @@ for optional Windows Task Scheduler / macOS launchd examples.
 - Analyzer interfaces and Python/Node build/test analyzers.
 - Structured findings and stable machine-readable exit semantics.
 - Report comparison and collision-safe storage for repeated/concurrent runs.
-- A published synthetic evaluation set for recall, false positives and critic behavior.
+- Repeated model evaluations on the synthetic starter set, broader cases and measured
+  recall, false positives and critic behavior.
 
 These are planned, not implemented features. No benchmark score or measured accuracy
 improvement is claimed.
