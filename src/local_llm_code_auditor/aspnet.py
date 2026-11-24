@@ -6,7 +6,8 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
-from .static_analysis import StaticFinding, is_ignored_path, relative_path
+from .paths import repository_files
+from .static_analysis import StaticFinding, relative_path
 
 _SENSITIVE_KEY_PARTS = (
     "password",
@@ -83,7 +84,7 @@ def _web_project(project: Path) -> bool:
 def _iter_web_projects(repo: Path) -> tuple[Path, ...]:
     return tuple(
         sorted(
-            (p for p in repo.rglob("*.csproj") if not is_ignored_path(p) and _web_project(p)),
+            (p for p in repository_files(repo, "*.csproj") if _web_project(p)),
             key=lambda p: str(p).lower(),
         )
     )
@@ -92,7 +93,7 @@ def _iter_web_projects(repo: Path) -> tuple[Path, ...]:
 def _iter_appsettings(repo: Path) -> tuple[Path, ...]:
     return tuple(
         sorted(
-            (p for p in repo.rglob("appsettings*.json") if p.is_file() and not is_ignored_path(p)),
+            repository_files(repo, "appsettings*.json"),
             key=lambda p: str(p).lower(),
         )
     )

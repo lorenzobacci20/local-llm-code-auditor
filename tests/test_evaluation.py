@@ -1,3 +1,4 @@
+import hashlib
 import json
 import subprocess
 from pathlib import Path
@@ -14,9 +15,9 @@ def deterministic_run(tmp_path_factory):
     return output, json.loads((output / "manifest.json").read_text(encoding="utf-8"))
 
 
-def test_real_cli_checks_six_cases_and_distinguishes_semantics_from_rules(deterministic_run):
+def test_real_cli_checks_dataset_and_distinguishes_semantics_from_rules(deterministic_run):
     output, manifest = deterministic_run
-    assert manifest["summary"] == {"total": 6, "complete": 6}
+    assert manifest["summary"] == {"total": 22, "complete": 22}
     assert manifest["mode"] == "deterministic"
     assert manifest["llm_quality"] == "NOT_EVALUATED"
     results = {case["case_id"]: case for case in manifest["cases"]}
@@ -43,23 +44,33 @@ def test_ground_truth_and_identifying_paths_do_not_enter_target(deterministic_ru
         tracked = subprocess.run(
             ["git", "ls-files"], cwd=repo, check=True, capture_output=True, text=True
         ).stdout.splitlines()
-        assert set(tracked) == {
-            "Program.cs",
-            "SampleApp.csproj",
-            "Services/PricingService.cs",
-            "appsettings.Production.json",
-        }
+        if case["case_id"] in {f"c{i:02}" for i in range(1, 7)}:
+            assert set(tracked) == {
+                "Program.cs",
+                "SampleApp.csproj",
+                "Services/PricingService.cs",
+                "appsettings.Production.json",
+            }
+        assert all(Path(path).suffix in {".cs", ".json", ".csproj", ".py"} for path in tracked)
+        assert not {"cases.json", "ground-truth.json", "judgments.json"}.intersection(tracked)
         assert not list(repo.glob("*truth*"))
         assert set(case["input_files_sha256"]) == set(tracked)
         report = (output / case["report"]).read_text(encoding="utf-8")
         assert str(output) not in report
-        path_line = next(
-            line for line in report.splitlines() if line.startswith("- Repository path: `")
-        )
-        audited_path = Path(path_line.removeprefix("- Repository path: `").removesuffix("`"))
-        assert audited_path.name == "sample-app"
-        assert audited_path.parent.name.startswith("auditor-eval-")
+        assert "- Repository: `sample-app`" in report
+        assert "auditor-eval-" not in report
         assert "Project context status: **DISABLED**" in report
+
+
+def test_selector_challenge_excludes_required_dependency_from_initial_sample(deterministic_run):
+    _, manifest = deterministic_run
+    for case in manifest["cases"]:
+        if case["case_id"] in {"c19", "c20"}:
+            assert len(case["files"]) == 3
+            assert "invoice_service.py" in case["files"]
+            assert "rounding.py" not in case["files"]
+            assert "rounding.py" in case["input_files_sha256"]
+            assert not case["selector_target_read"]
 
 
 def test_model_prose_cannot_change_deterministic_oracle(deterministic_run):
@@ -115,6 +126,13 @@ def test_zero_exit_with_critic_fallback_is_incomplete(tmp_path, monkeypatch):
         )
         text = text.replace("Critic pass: **SKIPPED_NO_LLM**", "Critic pass: **PARTIAL_FALLBACK**")
         report.write_text(text, encoding="utf-8")
+        sidecar = report.with_suffix(".json")
+        document = json.loads(sidecar.read_text(encoding="utf-8"))
+        document["markdown_sha256"] = hashlib.sha256(report.read_bytes()).hexdigest()
+        document["pipeline"].update(
+            audit="COMPLETE", selector="SKIPPED_NO_REMAINING_FILES", critic="PARTIAL_FALLBACK"
+        )
+        sidecar.write_text(json.dumps(document), encoding="utf-8")
         return completed
 
     monkeypatch.setattr(evaluate, "run_command", run)
@@ -150,3 +168,116 @@ def test_critic_off_requires_completed_audit_and_draft_source():
     assert evaluate.pipeline_complete(pipeline, llm=True, critic="off")
     pipeline["audit"] = "ERROR"
     assert not evaluate.pipeline_complete(pipeline, llm=True, critic="off")
+
+
+def test_verified_judgments_are_bound_to_actual_outputs_and_seeds(tmp_path):
+    from scripts.score_evaluation import score
+
+    def write(name, obj):
+        (tmp_path / name).write_text(json.dumps(obj), encoding="utf-8")
+
+    draft, revision = "Off by one at ten. Other issue.", "Off by one at ten."
+    cases = [{"case_id": "sample", "status": "COMPLETE", "structured_report": "report.json"}]
+    write("report.json", {"draft": draft, "revision": revision})
+    write("ground-truth.json", {"cases": [{"id": "sample", "defects": [{"id": "sample.1"}]}]})
+    truth_hash = hashlib.sha256((tmp_path / "ground-truth.json").read_bytes()).hexdigest()
+    cases[0]["pair"] = {
+        "draft_sha256": hashlib.sha256(draft.encode()).hexdigest(),
+        "revision_sha256": hashlib.sha256(revision.encode()).hexdigest(),
+    }
+    write(
+        "manifest.json",
+        {
+            "settings": {"paired": True},
+            "dataset_sha256": "h",
+            "ground_truth_sha256": truth_hash,
+            "cases": cases,
+        },
+    )
+    seeded = {
+        "classification": "seeded",
+        "defect_id": "sample.1",
+        "reason": "Fixture contract",
+        "quote": "Off by one at ten.",
+    }
+    extra = {
+        "classification": "unsupported",
+        "reason": "Contradicted by the guard",
+        "quote": "Other issue.",
+    }
+    reviews = []
+    for stage, response in [("draft", draft), ("revision", revision)]:
+        reviews.append(
+            {
+                "case_id": "sample",
+                "stage": stage,
+                "artifact_sha256": hashlib.sha256(response.encode()).hexdigest(),
+                "status": "verified",
+                "reviewer": "fixture",
+                "findings": [seeded],
+                "missed_defects": [],
+            }
+        )
+    reviews[0]["findings"].append(extra)
+    record = {"dataset_sha256": "h", "reviews": reviews}
+    write("judgments.json", record)
+    result = score(tmp_path)["stages"]
+    assert result["draft"]["precision"] == 0.5
+    assert (
+        result["revision"]["precision"]
+        == result["revision"]["recall"]
+        == result["revision"]["f1"]
+        == 1
+    )
+    reviews[0]["status"] = "pending"
+    write("judgments.json", record)
+    with pytest.raises(ValueError, match="human adjudication"):
+        score(tmp_path)
+    reviews[0]["status"] = "verified"
+    reviews[0]["missed_defects"] = ["sample.1"]
+    write("judgments.json", record)
+    with pytest.raises(ValueError, match="remaining seeded"):
+        score(tmp_path)
+    write("report.json", {"draft": "another independent run", "revision": revision})
+    with pytest.raises(ValueError, match="artifact"):
+        score(tmp_path)
+    reviews[0]["artifact_sha256"] = hashlib.sha256(b"another independent run").hexdigest()
+    write("judgments.json", record)
+    with pytest.raises(ValueError, match="artifact"):
+        score(tmp_path)
+    write("ground-truth.json", {"cases": []})
+    with pytest.raises(ValueError, match="Ground truth"):
+        score(tmp_path)
+
+
+def test_paired_mode_requires_local_model_and_enabled_critic(tmp_path):
+    with pytest.raises(SystemExit):
+        evaluate.main(["--paired", "--output", str(tmp_path / "a")])
+    with pytest.raises(SystemExit):
+        evaluate.main(["--llm", "--paired", "--critic", "off", "--output", str(tmp_path / "b")])
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_suite_budget_marks_remaining_cases_without_starting_them(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    now = [0.0]
+    monkeypatch.setattr(evaluate, "time", SimpleNamespace(monotonic=lambda: now[0]))
+
+    def one_case(case, destination, args, deadline):
+        assert case["id"] == "c01"
+        now[0] = deadline
+        return {"case_id": case["id"], "status": "COMPLETE", "report": None}
+
+    monkeypatch.setattr(evaluate, "run_case", one_case)
+    destination = tmp_path / "run"
+    assert (
+        evaluate.main(
+            ["--case", "c01", "--case", "c02", "--suite-timeout", "1", "--output", str(destination)]
+        )
+        == 1
+    )
+    manifest = json.loads((destination / "manifest.json").read_text())
+    assert [case["status"] for case in manifest["cases"]] == ["COMPLETE", "NOT_STARTED"]
+    assert manifest["cases"][1]["error"]["type"] == "SUITE_TIMEOUT"
+    assert not (destination / "c02").exists()

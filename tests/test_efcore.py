@@ -42,3 +42,20 @@ def test_efcore_static_audit_never_claims_pending_model_check(tmp_path):
     assert result.detected
     assert any(f.code == "EF_NO_LOCAL_MIGRATIONS" for f in result.findings)
     assert "NOT_RUN_STATIC_ONLY" in result.evidence_text()
+
+
+def test_migration_rule_ignores_documentation_and_sql_literals(tmp_path):
+    _write_ef_project(tmp_path)
+    migrations = tmp_path / "Migrations"
+    migrations.mkdir()
+    path = migrations / "202609021200_Init.cs"
+    example = "throw new NotImplementedException()"
+    path.write_text(
+        f'// {example}\n/* {example} */\nvar a = "{example}";\n'
+        f'var b = @"sql ""{example}""";\nvar c = """\n{example}\n""";',
+        encoding="utf-8",
+    )
+    assert all(f.code != "EF_MIGRATION_NOT_IMPLEMENTED" for f in audit(tmp_path).findings)
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write("\nvoid Down() => throw /* deliberate */ new System.NotImplementedException();")
+    assert any(f.code == "EF_MIGRATION_NOT_IMPLEMENTED" for f in audit(tmp_path).findings)

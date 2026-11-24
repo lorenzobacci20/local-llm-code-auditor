@@ -4,6 +4,9 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
+from .paths import local_path, read_evidence_file
+from .privacy import redact
+
 _PROJECT_FILES = (
     "current-state.md",
     "architecture.md",
@@ -34,7 +37,7 @@ def discover_context_root(
         resolved = configured_path.expanduser().resolve(strict=True)
     except OSError:
         return None
-    if resolved.is_dir() and (resolved / "AGENTS.md").is_file():
+    if resolved.is_dir() and local_path(resolved, resolved / "AGENTS.md"):
         return resolved
     return None
 
@@ -49,7 +52,8 @@ def _slug_variants(repo_name: str) -> tuple[str, ...]:
 
 def _matches_repository_metadata(path: Path, repo_name: str) -> bool:
     try:
-        prefix = path.read_text(encoding="utf-8")[:6_000]
+        with path.open(encoding="utf-8") as stream:
+            prefix = stream.read(6_000)
     except (OSError, UnicodeError):
         return False
 
@@ -66,23 +70,21 @@ def _matches_repository_metadata(path: Path, repo_name: str) -> bool:
 
 def find_project_dir(context_root: Path, repo_name: str) -> Path | None:
     projects = context_root / "projects"
-    if not projects.is_dir():
+    if not local_path(context_root, projects, directory=True):
         return None
 
     for variant in _slug_variants(repo_name):
         candidate = projects / variant
-        if (
-            candidate.is_dir()
-            and not candidate.is_symlink()
-            and candidate.resolve().is_relative_to(context_root.resolve())
-        ):
+        if local_path(context_root, candidate, directory=True):
             return candidate
 
     for candidate in projects.iterdir():
-        if not candidate.is_dir() or candidate.is_symlink():
+        if not local_path(context_root, candidate, directory=True):
             continue
         current_state = candidate / "current-state.md"
-        if current_state.is_file() and _matches_repository_metadata(current_state, repo_name):
+        if local_path(context_root, current_state) and _matches_repository_metadata(
+            current_state, repo_name
+        ):
             return candidate
     return None
 
@@ -93,14 +95,17 @@ def _append_file(
     remaining: int,
 ) -> tuple[str, str, bool]:
     relative = path.relative_to(context_root).as_posix()
-    if path.is_symlink() or not path.resolve().is_relative_to(context_root.resolve()):
+    if not local_path(context_root, path):
         return "", relative, False
     header = f"### Project context: {relative}\n\n"
     if remaining <= len(header):
         return "", relative, True
 
     try:
-        content = path.read_text(encoding="utf-8").strip()
+        data = read_evidence_file(path)
+        if data is None:
+            return "", relative, True
+        content = redact(data.decode("utf-8")).strip()
     except (OSError, UnicodeError):
         return "", relative, False
 
@@ -108,7 +113,7 @@ def _append_file(
     truncated = len(content) > available
     if truncated:
         marker = "\n\n[context file truncated by Local LLM Code Auditor]"
-        content = content[: max(0, available - len(marker))].rstrip() + marker
+        content = (content[: max(0, available - len(marker))].rstrip() + marker)[:available]
     return header + content, relative, truncated
 
 
@@ -118,13 +123,15 @@ def load_context(context_root: Path | None, repo_name: str, max_chars: int) -> C
 
     candidates: list[Path] = []
     agents = context_root / "AGENTS.md"
-    if agents.is_file():
+    if local_path(context_root, agents):
         candidates.append(agents)
 
     project_dir = find_project_dir(context_root, repo_name)
     if project_dir is not None:
         candidates.extend(
-            project_dir / name for name in _PROJECT_FILES if (project_dir / name).is_file()
+            project_dir / name
+            for name in _PROJECT_FILES
+            if local_path(context_root, project_dir / name)
         )
 
     sections: list[str] = []
@@ -133,13 +140,14 @@ def load_context(context_root: Path | None, repo_name: str, max_chars: int) -> C
     remaining = max_chars
 
     for path in candidates:
-        section, relative, file_truncated = _append_file(context_root, path, remaining)
+        separator = 2 if sections else 0
+        section, relative, file_truncated = _append_file(context_root, path, remaining - separator)
         if not section:
             truncated = truncated or file_truncated
-            break
+            continue
         sections.append(section)
         files.append(relative)
-        remaining -= len(section)
+        remaining -= len(section) + separator
         truncated = truncated or file_truncated
         if remaining <= 0:
             break

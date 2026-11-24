@@ -1,5 +1,16 @@
 # Release validation
 
+## 0.2.0 release candidate
+
+The baseline for this release is `d2ae67f934eb7efeab45e4c6308d662997563819`.
+Its six deterministic cases completed again on Windows with Python 3.12.10.
+The baseline suite passed 74 tests with two privilege-dependent symlink skips.
+The full matrix and history/tree secret scan passed on the [baseline CI run](https://github.com/lorenzobacci20/local-llm-code-auditor/actions/runs/44731017100).
+
+For this candidate see the [release audit](audit/results/12-final-go-live.md),
+[benchmark records](benchmarks.md) and [repeatable package checks](release-0.2.0.md).
+The older measurements below describe their corresponding historical revisions.
+
 ## Evaluation starter — 2026-11-20
 
 Checked on Linux x86_64 with CPython 3.12.14 in an isolated development installation.
@@ -60,5 +71,5 @@ The current commit status is available from the repository Actions tab and READM
 
 Gitleaks and manual review reduce publication risk but are not proof of absence of
 all sensitive information. Generated reports remain private by default, and the
-runtime model input has no universal secret-redaction layer. See the README and
+current release uses best-effort pattern-based redaction. See the README and
 SECURITY.md for the exact trust boundary and residual limitations.

@@ -5,6 +5,22 @@ import pytest
 from local_llm_code_auditor.config import load_config
 
 
+@pytest.mark.parametrize(
+    "setting",
+    [
+        '[context]\nenabled="false"',
+        '[agent]\nroots="."',
+        "[agent]\ncommand_timeout_seconds=true",
+        "agent=[]",
+    ],
+)
+def test_malformed_permissions_and_limits_fail_closed(tmp_path, setting):
+    path = tmp_path / "audit.toml"
+    path.write_text(setting, encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_config(path)
+
+
 def test_load_config_uses_effectiveness_first_defaults(tmp_path: Path):
     p = tmp_path / "agent.toml"
     p.write_text('[agent]\nroots=["~/Code"]\nmodel="x"\n', encoding="utf-8")

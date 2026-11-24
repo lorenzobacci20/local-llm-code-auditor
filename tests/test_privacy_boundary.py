@@ -1,3 +1,4 @@
+import os
 from unittest.mock import patch
 from urllib import request
 
@@ -6,6 +7,7 @@ import pytest
 from local_llm_code_auditor.cli import main
 from local_llm_code_auditor.context import load_context
 from local_llm_code_auditor.ollama import OllamaError, _NoRedirect, chat, validate_local_url
+from local_llm_code_auditor.paths import local_path, repository_files
 from local_llm_code_auditor.source_review import collect, extend_with_followup
 
 
@@ -102,3 +104,24 @@ def test_context_paths_are_relative_to_configuration_not_current_directory(tmp_p
     result = load_config(config)
     assert result.roots == [tmp_path / "repos"]
     assert result.report_dir == tmp_path / "output"
+
+
+def test_linked_directory_excluded_from_file_inventory_and_context(tmp_path):
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    library = tmp_path / "library"
+    library.mkdir()
+    (library / "source.cs").write_text("class Fixture {}", encoding="utf-8")
+    link = repo / "projects"
+    if os.name == "nt":
+        import _winapi
+
+        try:
+            _winapi.CreateJunction(str(library), str(link))
+        except PermissionError:
+            pytest.skip("Windows sandbox disallows junction creation")
+    else:
+        link.symlink_to(library, target_is_directory=True)
+    assert not local_path(repo, link / "source.cs")
+    assert list(repository_files(repo, "*.cs")) == []
+    assert load_context(repo, "source", 1000).files == ()

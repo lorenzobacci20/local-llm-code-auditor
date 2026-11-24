@@ -18,6 +18,17 @@ class CommandResult:
 
 
 def run(command: list[str], cwd: Path, timeout: int = 900) -> CommandResult:
+    if command[0] == "git":
+        command = [
+            "git",
+            "--no-pager",
+            "--no-optional-locks",
+            "-c",
+            "core.fsmonitor=false",
+            "-c",
+            "submodule.recurse=false",
+            *command[1:],
+        ]
     try:
         completed = subprocess.run(
             command,

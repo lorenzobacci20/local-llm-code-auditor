@@ -2,12 +2,29 @@ import subprocess
 from pathlib import Path
 
 from local_llm_code_auditor.llm_review import (
+    bound_evidence,
     critic_user_prompt,
     followup_user_prompt,
     parse_followup_files,
     remaining_inventory,
+    selector_input,
 )
-from local_llm_code_auditor.source_review import collect, extend_with_followup
+from local_llm_code_auditor.source_review import SourceReview, collect, extend_with_followup
+
+
+def test_inventory_budget_lists_only_whole_offered_paths_and_bounds_unicode():
+    review = SourceReview(enabled=True, candidate_files=tuple(f"module/{n}.py" for n in range(500)))
+    prompt, offered, truncated = selector_input("読み取る" * 500, review, 3, 900)
+    assert 0 < len(offered) < 500
+    assert truncated and len(prompt.encode()) <= 900
+    assert tuple(line[2:] for line in prompt.splitlines() if line.startswith("- ")) == offered
+    assert (
+        parse_followup_files(
+            '["module/499.py"]', allowed_files=offered, already_selected=(), max_files=3
+        )
+        == ()
+    )
+    assert len(bound_evidence("🌱" * 500, 101)[0].encode()) <= 101
 
 
 def _git(repo: Path, *args: str) -> None:

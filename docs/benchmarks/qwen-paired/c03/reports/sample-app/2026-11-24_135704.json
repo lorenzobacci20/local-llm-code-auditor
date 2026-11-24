@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "findings": [],
+  "repository": "sample-app",
+  "head": "df68f4aee940",
+  "model": "qwen3.8:27b",
+  "num_ctx": 8192,
+  "num_predict": 1024,
+  "context_status": "DISABLED",
+  "pipeline": {
+    "audit": "PARTIAL",
+    "critic": "SKIPPED_AUDIT_PARTIAL",
+    "selector": "DISABLED",
+    "final_source": "DRAFT"
+  },
+  "stages": {
+    "audit": {
+      "status": "PARTIAL",
+      "input_clipped": false,
+      "done_reason": "length",
+      "prompt_tokens": 1683,
+      "output_tokens": 1024,
+      "duration_ns": 106901892000,
+      "tokens_per_second": 14.766387600687404
+    },
+    "critic": {
+      "status": "SKIPPED_AUDIT_PARTIAL",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    },
+    "selector": {
+      "status": "DISABLED",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    }
+  },
+  "files": [
+    "Program.cs",
+    "Services/PricingService.cs"
+  ],
+  "followup_files": [],
+  "selector_paths_offered": 0,
+  "analysis": "",
+  "draft": "",
+  "revision": null,
+  "markdown_sha256": "ea39623e8fb1f27e8d986ea05380ef8ed1612240b85524eb13aa75ddd27a68de"
+}

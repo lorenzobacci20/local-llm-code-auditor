@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "id": "c03",
+      "pair": "p02",
+      "topic": "Per-item calculation",
+      "expected_rule_ids": [],
+      "expected_behavior": "Quantity zero must be rejected with ArgumentOutOfRangeException before dividing the non-negative total.",
+      "review_rubric": "PricingService.Calculate(10m, 0) passes the quantity < 0 guard and divides by zero. A correct semantic finding identifies the zero boundary and the missing <= 0 guard; merely recommending generic validation is insufficient.",
+      "contract": "Reject non-positive quantities with ArgumentOutOfRangeException before returning total divided by quantity.",
+      "counterpart": "c04",
+      "layout": "common",
+      "affected_files": [
+        "Services/PricingService.cs"
+      ],
+      "defects": [
+        {
+          "id": "c03.1",
+          "description": "zero quantity passes the guard",
+          "consequence": "Calculate(10m, 0) raises DivideByZeroException instead of the contractual ArgumentOutOfRangeException."
+        }
+      ]
+    }
+  ]
+}

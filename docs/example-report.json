@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "ASPNET_PROD_DETAILED_ERRORS",
+      "origin": "deterministic",
+      "category": "ASP.NET",
+      "severity": "MEDIUM",
+      "file": "appsettings.Production.json",
+      "location": null,
+      "description": "Production configuration enables `DetailedErrors=true`.",
+      "evidence": "Production configuration enables `DetailedErrors=true`.",
+      "consequence": null,
+      "recommendation": null
+    },
+    {
+      "id": "ASPNET_PROD_LOCALHOST",
+      "origin": "deterministic",
+      "category": "ASP.NET",
+      "severity": "MEDIUM",
+      "file": "appsettings.Production.json",
+      "location": null,
+      "description": "Production configuration key `Api:BaseUrl` points to localhost/loopback.",
+      "evidence": "Production configuration key `Api:BaseUrl` points to localhost/loopback.",
+      "consequence": null,
+      "recommendation": null
+    },
+    {
+      "id": "ASPNET_PROD_VERBOSE_LOGGING",
+      "origin": "deterministic",
+      "category": "ASP.NET",
+      "severity": "LOW",
+      "file": "appsettings.Production.json",
+      "location": null,
+      "description": "Production logging key `Logging:LogLevel:Default` is set to `Debug`.",
+      "evidence": "Production logging key `Logging:LogLevel:Default` is set to `Debug`.",
+      "consequence": null,
+      "recommendation": null
+    }
+  ],
+  "repository": "sample-app",
+  "head": "793f6b74f5ca",
+  "model": "qwen3.5:9b",
+  "num_ctx": 16384,
+  "num_predict": 4096,
+  "context_status": "DISABLED",
+  "pipeline": {
+    "audit": "SKIPPED",
+    "critic": "SKIPPED_NO_LLM",
+    "selector": "SKIPPED_NO_LLM",
+    "final_source": "NONE"
+  },
+  "stages": {
+    "audit": {
+      "status": "SKIPPED",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    },
+    "critic": {
+      "status": "SKIPPED_NO_LLM",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    },
+    "selector": {
+      "status": "SKIPPED_NO_LLM",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    }
+  },
+  "files": [
+    "Program.cs"
+  ],
+  "followup_files": [],
+  "selector_paths_offered": 0,
+  "analysis": null,
+  "markdown_sha256": "ca109dc96879909271c6538241003f992dda08554f4454d338d6c97a63057878"
+}

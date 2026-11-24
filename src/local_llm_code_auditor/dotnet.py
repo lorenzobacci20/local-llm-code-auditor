@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
+from .paths import local_path, repository_files
 from .process import CommandResult, run
 
 _TEST_PACKAGE_HINTS = {
@@ -25,7 +26,9 @@ class DotnetAudit:
 
 
 def detect(repo: Path) -> bool:
-    return any(repo.glob("*.sln")) or any(repo.glob("*.slnx")) or any(repo.rglob("*.csproj"))
+    return any(
+        local_path(repo, path) for pattern in ("*.sln", "*.slnx") for path in repo.glob(pattern)
+    ) or any(repository_files(repo, "*.csproj"))
 
 
 def _local_name(tag: str) -> str:
@@ -62,7 +65,11 @@ def _looks_like_test_project(project: Path) -> bool:
 
 
 def discover_test_projects(repo: Path) -> tuple[Path, ...]:
-    projects = [project for project in repo.rglob("*.csproj") if _looks_like_test_project(project)]
+    projects = [
+        project
+        for project in repository_files(repo, "*.csproj")
+        if _looks_like_test_project(project)
+    ]
     return tuple(sorted(projects, key=lambda path: str(path).lower()))
 
 

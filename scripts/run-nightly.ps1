@@ -29,9 +29,6 @@ function Write-NightlyLog([string]$Message) {
 
 try {
   Write-NightlyLog "Starting Local LLM Code Auditor nightly run."
-  Write-NightlyLog "User=$([System.Security.Principal.WindowsIdentity]::GetCurrent().Name) PID=$PID"
-  Write-NightlyLog "ProjectPath=$ProjectPath"
-  Write-NightlyLog "ConfigPath=$ConfigPath"
   Write-NightlyLog "Model=$Model NumCtx=$NumCtx NumPredict=$NumPredict"
 
   if ([string]::IsNullOrWhiteSpace($OllamaPath)) {
@@ -63,7 +60,7 @@ try {
   & $OllamaPath show $Model *> $null
   if ($LASTEXITCODE -ne 0) { throw "Nightly model '$Model' is not installed." }
 
-  $agentArgs = @("--config", $ConfigPath, "--model", $Model, "--num-ctx", "$NumCtx", "--num-predict", "$NumPredict")
+  $agentArgs = @("--strict-pipeline", "--config", $ConfigPath, "--model", $Model, "--num-ctx", "$NumCtx", "--num-predict", "$NumPredict")
   Push-Location $ProjectPath
   try {
     & $exe @agentArgs 2>&1 | Tee-Object -FilePath $logPath -Append

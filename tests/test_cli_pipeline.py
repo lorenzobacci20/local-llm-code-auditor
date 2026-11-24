@@ -1,3 +1,4 @@
+import json
 import subprocess
 from pathlib import Path
 from unittest.mock import patch
@@ -79,3 +80,42 @@ def test_unavailable_model_writes_error_report_and_returns_nonzero(tmp_path):
         with patch("local_llm_code_auditor.cli.chat", side_effect=OllamaError("Synthetic failure")):
             assert main() == 1
     assert "Audit LLM response: **ERROR**" in report(tmp_path)
+
+
+def test_paired_outputs_use_same_complete_draft_and_evidence(tmp_path):
+    repo, config = setup_repository(tmp_path)
+    draft = "## Findings\n- LOW | Service.cs | proof | mistake | impact | change"
+    replies = [response("[]"), response(draft), response("## Verdict\nGO")]
+    with patch(
+        "sys.argv", ["auditor", "--config", str(config), "--repo", str(repo), "--capture-draft"]
+    ):
+        with patch("local_llm_code_auditor.cli.chat", side_effect=replies) as model:
+            assert main() == 0
+    record = json.loads(next((tmp_path / "reports").rglob("*.json")).read_text(encoding="utf-8"))
+    audit_evidence = model.call_args_list[1].args[3]
+    critic_input = model.call_args_list[2].args[3]
+    assert critic_input.startswith(audit_evidence)
+    assert critic_input.endswith(record["draft"]) and record["draft"] == draft
+    assert record["revision"] == record["analysis"] == "## Verdict\nGO"
+    assert record["pipeline"]["final_source"] == "CRITIC"
+    assert str(repo.parent) not in audit_evidence
+
+
+def test_partial_selector_does_not_trigger_reads_and_strict_mode_exposes_failure(tmp_path):
+    repo, config = setup_repository(tmp_path)
+    with patch(
+        "sys.argv", ["auditor", "--config", str(config), "--repo", str(repo), "--strict-pipeline"]
+    ):
+        with patch(
+            "local_llm_code_auditor.cli.chat",
+            side_effect=[
+                response('["Service.cs"]', "length"),
+                response("draft"),
+                response("revision"),
+            ],
+        ):
+            assert main() == 3
+    record = json.loads(next((tmp_path / "reports").rglob("*.json")).read_text(encoding="utf-8"))
+    assert record["pipeline"]["selector"] == "PARTIAL"
+    assert record["followup_files"] == []
+    assert "draft" not in record

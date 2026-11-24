@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "LLM-53ffbda81c927a9a",
+      "category": "model_review",
+      "origin": "llm",
+      "severity": "INFO",
+      "file": "N/A",
+      "location": null,
+      "evidence": "N/A",
+      "description": "No actionable defects were established in the reviewed evidence.",
+      "consequence": "N/A",
+      "recommendation": "N/A",
+      "verification": "unverified"
+    }
+  ],
+  "repository": "sample-app",
+  "head": "4449c80a8e6b",
+  "model": "qwen2.5-coder:14b",
+  "num_ctx": 8192,
+  "num_predict": 1024,
+  "context_status": "DISABLED",
+  "pipeline": {
+    "audit": "COMPLETE",
+    "critic": "COMPLETE",
+    "selector": "DISABLED",
+    "final_source": "CRITIC"
+  },
+  "stages": {
+    "audit": {
+      "status": "COMPLETE",
+      "input_clipped": false,
+      "done_reason": "stop",
+      "prompt_tokens": 1626,
+      "output_tokens": 85,
+      "duration_ns": 2585538600,
+      "tokens_per_second": 41.387282223772765
+    },
+    "critic": {
+      "status": "COMPLETE",
+      "input_clipped": false,
+      "done_reason": "stop",
+      "prompt_tokens": 1239,
+      "output_tokens": 47,
+      "duration_ns": 1467130700,
+      "tokens_per_second": 42.74658641222444
+    },
+    "selector": {
+      "status": "DISABLED",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    }
+  },
+  "files": [
+    "invoice_handler.py",
+    "invoice_service.py",
+    "receipt_worker.py"
+  ],
+  "followup_files": [],
+  "selector_paths_offered": 0,
+  "analysis": "## Verdict\nGO\n\n## Findings\n- INFO | N/A | N/A | No actionable defects were established in the reviewed evidence. | N/A | N/A\n\n## Suggested actions\n- No action required.",
+  "draft": "## Verdict\nGO\n\n## Findings\n- LOW | invoice_service.py | return net_amount(subtotal(lines)) | The function `invoice_total` applies a one-unit credit to totals of at least 100, which might not be intuitive. | Potential confusion for developers maintaining the code. | Consider adding a comment to explain the one-unit credit logic.\n\n## Suggested actions\n- No action required.",
+  "revision": "## Verdict\nGO\n\n## Findings\n- INFO | N/A | N/A | No actionable defects were established in the reviewed evidence. | N/A | N/A\n\n## Suggested actions\n- No action required.",
+  "markdown_sha256": "3c7742c0eef4fda64e3b746a43d95cd07616db38f9c83df13edd4c9137975a90"
+}

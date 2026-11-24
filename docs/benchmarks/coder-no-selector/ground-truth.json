@@ -1,0 +1,29 @@
+{
+  "version": 2,
+  "cases": [
+    {
+      "id": "c19",
+      "pair": "p10",
+      "topic": "Inclusive invoice adjustment",
+      "contract": "Apply a one-unit credit to invoices whose subtotal is at least 100. Smaller invoices keep their subtotal.",
+      "expected_behavior": "An invoice with one 100-unit line costs 99. One 99-unit line costs 99.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "rounding.py",
+        "invoice_service.py"
+      ],
+      "defects": [
+        {
+          "id": "c19.1",
+          "description": "the credit is missing at the inclusive threshold",
+          "consequence": "A subtotal of exactly 100 is charged at 100 rather than 99."
+        }
+      ],
+      "review_rubric": "Require the relevant condition in rounding.py and its observable consequence. A subtotal of exactly 100 is charged at 100 rather than 99.",
+      "layout": "invoice",
+      "counterpart": "c20",
+      "initial_max_files": 3,
+      "selector_target": "rounding.py"
+    }
+  ]
+}
