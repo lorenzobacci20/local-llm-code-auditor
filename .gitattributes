@@ -1,0 +1,4 @@
+# Published evidence has byte-level SHA-256 references across operating systems.
+docs/example-report.md -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/example-report.json -text whitespace=trailing-space,space-before-tab,cr-at-eol
+docs/benchmarks/** -text whitespace=trailing-space,space-before-tab,cr-at-eol

@@ -16,9 +16,9 @@ The script registers a task for the current interactive user, pins the resolved
 Ollama executable, ignores overlapping runs and invokes `scripts/run-nightly.ps1`.
 The runner can start the local Ollama server and keeps logs for 30 days. It uses
 static-only CLI mode; builds/tests remain disabled. Review the script before enabling
-wake/battery behavior. Exit code 1 is recorded as findings, while invalid config or
-repository selection remains an operational failure. Model failures also currently
-use exit code 1: inspect report completion telemetry, not just Task Scheduler status.
+wake/battery behavior. The wrapper uses `--strict-pipeline`. It maps exit code 1 to
+a completed audit with findings or a failed trusted build/test, and propagates
+operational failures (codes 2 and 3). Inspect the report for individual stages.
 
 Remove a task you registered with:
 

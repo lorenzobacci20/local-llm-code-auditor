@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -11,7 +12,12 @@ from pathlib import Path
 
 
 def run_demo(
-    workspace: Path, *, llm: bool = False, model: str = "qwen3.5:9b", think: bool | None = False
+    workspace: Path,
+    *,
+    llm: bool = False,
+    model: str = "qwen3.5:9b",
+    think: bool | None = False,
+    summary: bool = False,
 ) -> int:
     fixture = Path(__file__).resolve().parents[1] / "examples" / "synthetic-repo"
     repo = workspace / "sample-app"
@@ -71,7 +77,15 @@ def run_demo(
         required.extend(["Audit LLM response: **COMPLETE**", "Critic pass: **COMPLETE**"])
     else:
         required.extend(["Audit LLM response: **SKIPPED**", "Project context status: **DISABLED**"])
-    print(text)
+    if summary:
+        record = json.loads(reports[-1].with_suffix(".json").read_text(encoding="utf-8"))
+        print(f"Repository: {record['repository']}")
+        print(f"Local model: {record['pipeline']['audit']}")
+        print(f"Source sample: {', '.join(record['files'])}")
+        for finding in record["findings"]:
+            print(f"{finding['severity']:6}  {finding['id']}  {finding['file']}")
+    else:
+        print(text)
     if result.returncode not in (0, 1) or any(marker not in text for marker in required):
         print(result.stderr, file=sys.stderr)
         return 1
@@ -90,13 +104,22 @@ def main() -> int:
         help="Ollama thinking mode; use auto for models without the toggle",
     )
     parser.add_argument("--output", type=Path, help="Keep the workspace in a new directory")
+    parser.add_argument(
+        "--summary",
+        action="store_true",
+        help="Print a concise terminal view from the real JSON report",
+    )
     args = parser.parse_args()
     think = None if args.thinking == "auto" else args.thinking == "on"
     if args.output:
         args.output.mkdir(parents=True, exist_ok=False)
-        return run_demo(args.output.resolve(), llm=args.llm, model=args.model, think=think)
+        return run_demo(
+            args.output.resolve(), llm=args.llm, model=args.model, think=think, summary=args.summary
+        )
     with tempfile.TemporaryDirectory(prefix="code-auditor-demo-") as directory:
-        return run_demo(Path(directory), llm=args.llm, model=args.model, think=think)
+        return run_demo(
+            Path(directory), llm=args.llm, model=args.model, think=think, summary=args.summary
+        )
 
 
 if __name__ == "__main__":

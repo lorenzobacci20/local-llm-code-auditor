@@ -1,141 +1,161 @@
-# Synthetic evaluation starter
+# Evaluating a local audit
 
-This small dataset separates three questions:
+The dataset contains 22 public synthetic cases with stated contracts. Six original
+cases keep their identifiers. The runner sends a neutral Git repository to the
+real CLI for each case. It verifies execution and deterministic rule IDs. A human
+reviews the content of each model response before any quality metric is available.
 
-1. Did the implemented deterministic rules report the expected rule IDs?
-2. Did the requested audit pipeline complete, including the critic when enabled?
-3. Did the model identify a supported defect and avoid unsupported findings?
+## Run the deterministic suite
 
-The runner checks the first two. **LLM finding quality is always `NOT_EVALUATED` in
-its manifest.** A successful run, model verdict or matching word in a report is
-not a quality score. The third question requires the manual rubric below.
-
-## Run offline first
-
-From a development installation of this repository:
+Use a development installation from the checkout. The evaluation scripts and
+fixtures also ship in the source distribution.
 
 ```sh
-python scripts/evaluate.py --help
+python -m pip install -e ".[dev]"
 python scripts/evaluate.py --list
-python scripts/evaluate.py --output evaluation-runs/deterministic
+python scripts/evaluate.py --output evaluation-runs/offline
+python -m pytest -q tests/test_evaluation_contracts.py
 ```
 
-The default runs all six cases through the actual CLI with `--no-llm` and
-`--skip-build`. It requires Python and Git, but no Ollama, model, .NET SDK or
-database. Use `--case c03` to select one case; repeat the option for a subset.
+Each audit skips builds. The independent tests run trusted, bundled Python
+fixtures and compile four small C# pricing probes when a .NET 8+ SDK is available.
+The C# probe restores against installed SDK reference packs with NuGet package
+sources cleared. Pytest records a skip when a suitable SDK is absent. The
+reservation probe advances two coroutines at a fixed suspension point to reproduce a specific
+ordering without depending on sleeps.
 
-`--output` must name a new directory. An existing directory is rejected without
-overwriting its contents. Every case gets an independent workspace and report
-directory, avoiding collisions between reports from repositories with the same
-name or runs within the same second.
+| IDs | Contract under review |
+| --- | --- |
+| c01–c02 | Production ASP.NET settings cover detailed errors, default logging and a non-loopback API endpoint. |
+| c03–c04 | A zero quantity must be rejected before decimal division. |
+| c05–c06 | Quantity ten qualifies for the volume discount. |
+| c07–c08 | The EF Core migration rollback must remove the column created by its forward change. |
+| c09–c10 | A missing label receives a fallback before stripping whitespace. |
+| c11–c12 | A malformed shipment quantity is skipped by the importer. |
+| c13–c14 | A second reservation observes the stock held by a suspended first caller. |
+| c15–c16 | Rejecting a batch preserves the opening balance. |
+| c17–c18 | An owned output stream is closed even when writing fails. |
+| c19–c20 | An invoice credit includes the threshold; the delegated implementation lives outside the first three source files. |
+| c21, c22 | Clean controls exercise approval-role normalization and empty-window averages. |
 
-## Dataset and ground truth
+In each pair the odd-numbered case carries the seeded defect. c01 has three
+separate risks. Each case specifies its affected files, contract, observable
+consequences, zero or more named defects, deterministic rule expectations and a
+semantic review rubric. A clean case means the named contract holds for its
+specified behavior. The fixtures support code-review experiments across languages.
+Dedicated static rule analyzers cover ASP.NET and EF Core.
 
-| Pair | Cases | Behavior under review | Deterministic oracle |
-| --- | --- | --- | --- |
-| Production settings | `c01`, `c02` | Detailed errors, loopback API address and Debug logging, followed by their corrected settings | Three ASP.NET rule IDs in `c01`; none in `c02` |
-| Per-item price | `c03`, `c04` | Quantity zero passes a `< 0` guard before division; the corrected guard rejects `<= 0` | No implemented static rule for either case |
-| Quantity discount | `c05`, `c06` | A documented ten-item threshold is implemented with `> 10`; the correction uses `>= 10` | No implemented static rule for either case |
+The runner creates a new temporary repository named `sample-app`, disables
+external context, copies an optional source layout plus one overlay and makes
+a synthetic commit with a fixed message and identity. The model sees ordinary
+source comments describing public behavior. Case IDs, pairs, independent tests,
+rubrics and expected defects stay outside the audit target. In c19/c20 the
+six-file invoice workflow exposes `invoice_service.py` in its first three files.
+It imports `rounding.py`. Only a follow-up read exposes the credit implementation.
+`selector_target_read` records that observation separately from completion.
 
-The complete expected behavior and manual rubric live in
-[`examples/evaluation/cases.json`](../examples/evaluation/cases.json). The common
-project plus one case overlay form each target. Source comments describe its
-business contract; they do not announce which implementation is defective.
+## Local model and paired critic
 
-The runner audits a new neutral temporary path such as
-`auditor-eval-<random>/sample-app`, with branch `main` and commit message
-`Sample project`. Case IDs, pair labels, answers, rubric and the user-selected
-output path are excluded from that target. External project context is explicitly
-disabled. Only after the audit does the runner copy the workspace into the output.
-
-These are tiny fixtures, with two source files each. `max_files=16` makes both
-available to the initial source sample under the default budget. Consequently the
-selector normally reports `SKIPPED_NO_REMAINING_FILES`. This starter does **not**
-evaluate selection quality on larger repositories. Custom low token budgets can
-still truncate evidence; inspect each report's source coverage and truncation.
-
-The examples are inspected statically: the runner neither builds nor executes the
-C# application. The semantic expectations are documented contracts and manually
-checkable examples, not claims that an application test suite was run.
-
-## Optional local-model runs
-
-Install and start Ollama and obtain the model separately. Then run:
+Select an installed local tag from `ollama list`. These commands use a shell
+variable named `MODEL` containing that tag. In PowerShell assign
+`$MODEL = 'your-installed-tag'` first.
 
 ```sh
-python scripts/evaluate.py --llm --model qwen3.5:9b --thinking off --critic on --output evaluation-runs/critic-on
-python scripts/evaluate.py --llm --model qwen3.5:9b --thinking off --critic off --output evaluation-runs/critic-off
+python scripts/evaluate.py --llm --model "$MODEL" --case c05 --selector off --critic off --timeout 180 --suite-timeout 240 --num-ctx 8192 --num-predict 768 --output evaluation-runs/audit
+python scripts/evaluate.py --llm --model "$MODEL" --case c05 --selector off --paired --timeout 240 --suite-timeout 300 --num-ctx 8192 --num-predict 768 --output evaluation-runs/paired
+python scripts/evaluate.py --llm --model "$MODEL" --case c19 --selector on --paired --timeout 300 --suite-timeout 360 --num-ctx 8192 --num-predict 768 --output evaluation-runs/selector
 ```
 
-Both commands use the existing local-only Ollama transport. `--thinking auto`
-omits the thinking toggle for models that do not support it. Context and output
-limits default to `--num-ctx 16384 --num-predict 4096`; the exact TOML and requested
-settings are saved. A model tag does not identify immutable weights: record the
-actual Ollama model digest, Ollama version and hardware separately when sharing
-results. No real-model result is shipped or claimed by this starter.
+The paired command captures the **one audit response actually supplied to its
+critic** and the completed revision in the same JSON report. Inspect the two
+strings and their SHA-256 hashes. A separate critic-off run measures a standalone
+configuration. Only the within-run pair controls the initial draft. Use the same
+model, tag digest, budgets and evidence selection when comparing configurations.
+For a selector ablation, repeat c19 with `--selector off` while holding all other
+options fixed. A selector can legitimately return an empty array. This loses the
+target dependency on c19/c20 and is recorded even if all model calls completed.
 
-`--timeout 300` is a **total subprocess time budget per case**, covering Git setup
-and the whole CLI process, not 300 seconds per model request. The client process
-is terminated on timeout; that does not guarantee immediate cancellation inside
-the separate Ollama server. Remaining cases still run and the failure is recorded.
+The runner defaults to 300 seconds per case and 1,800 seconds for all case
+subprocesses combined. Git setup and every stage share those remaining budgets.
+Metadata reads use short timeouts. Unstarted cases retain `NOT_STARTED` after a
+suite timeout. Copying artifacts and recording failures may extend wall time
+slightly. Killing a client on timeout does not ensure the independent Ollama
+server immediately stops computing. The output limit applies per model call.
+`--thinking auto` omits the thinking flag when the selected tag requires that.
 
-With the critic enabled, an audit or critic error, partial output or selector
-fallback is incomplete even when the underlying CLI exits zero. With `--critic
-off`, a completed audit and explicitly disabled critic are expected. The runner
-does not attempt to judge the content of either answer.
+## Evidence and exit status
 
-## Artifacts and interpretation
+Use a fresh output directory per run. The manifest records the auditor version,
+source-checkout commit and dirty flag when attributable, package source hash,
+runner SHA, settings, dataset version/hash, time, pipeline status, source files,
+stage token counts/rate/duration when reported, and post-case model allocation
+when the local Ollama process still lists the tag. A null memory sample means
+unavailable. This sample is an allocation snapshot, not peak process RAM.
+Version and digest are requested from the loopback Ollama server without pulling
+weights. The dataset digest hashes a sorted mapping of relative paths to SHA-256
+for canonical LF text across the source layouts, case overlays and answer file.
+Per-case input hashes cover actual file bytes in that workspace.
 
-The output contains:
+Each case directory retains the original Markdown and JSON report, copied synthetic
+Git repository, exact TOML and stdout/stderr. These local artifacts can contain
+host paths. Inspect and sanitize exports before sharing. A paired report also
+contains model-generated text in its JSON. The JSON links the exact Markdown
+bytes through a SHA-256 checksum. The runner checks both the checksum and
+agreement of the deterministic rules and pipeline telemetry.
 
-- `manifest.json`: settings, dataset/package version, runner and input-file hashes,
-  elapsed time, original CLI exit status, parsed pipeline telemetry, deterministic
-  rule comparison and errors, updated after each case.
-- `ground-truth.json`: the selected answers and rubric, outside all target repos.
-- `c01/` through `c06/`: copied synthetic Git repository, exact `audit.toml`, complete
-  original report when one was produced, and CLI stdout/stderr logs. Report paths
-  inside the manifest are relative to the output directory.
+`COMPLETE` requires the expected tool exit code, deterministic rules and requested
+pipeline. c07 expects CLI exit 1 because the planted HIGH rule fires. A missing
+dependency, malformed report, timeout, unexpected exit, rule mismatch, required
+stage fallback or partial response remains visible as an error or incomplete case.
+The suite returns 0 only when all selected cases complete, 1 for case failures
+and 2 for invalid command arguments. A successful deterministic run supplies no
+measurement of model quality. In particular, semantic-only defects can produce
+zero static rule IDs.
 
-Reports retain their original neutral temporary repository path for fidelity.
-That temporary path no longer exists after the run; its saved copy is
-`<output>/<case>/sample-app`. Reports are not normalized or abbreviated.
+## Human adjudication
 
-`deterministic_oracle.status=PASS` means the exact list of tool-generated rule IDs
-matches the fixture expectations. It says nothing about LLM quality. In particular,
-`c03` and `c05` intentionally pass that comparison with **zero deterministic
-findings despite their semantic defects**. The parser reads only the deterministic
-section before the model's repository analysis; model prose cannot add a scored
-rule.
+1. Keep the original run directory. Open the captured draft and revision (or
+   final analysis only), verify the collected files and review the selected case's
+   contract and independent test. Ideally have a second reviewer resolve
+   disagreements without seeing which stage produced each answer.
+2. In `judgments.json`, annotate every distinct actionable claim. Collapse repeated
+   statements of the same defect. Exclude healthy telemetry, verdicts and generic
+   suggestions that make no claim. For each entry record an exact `quote`, a
+   `reason` grounded in a file and observable consequence, and a classification.
+   Use `seeded` with the matching `defect_id`, `unsupported` for a contradicted
+   or fabricated claim, `supported_additional` for independently confirmed
+   unseeded defects, or `ambiguous` where the evidence is insufficient. A defect
+   missed through missing/truncated evidence still counts as missed. Explain the
+   coverage limitation in `notes`.
+3. Fill `missed_defects` with seeded IDs without a supported match. When the entire
+   artifact has been reviewed, set `status` to `verified` and supply the human
+   reviewer's name or pseudonym. Preserve empty lists for genuinely empty cases.
+   This attestation is a review workflow, not a digital signature.
+4. Run `python scripts/score_evaluation.py evaluation-runs/paired`. It binds
+   reviews to response digests, requires every completed response to be judged,
+   rejects double matching and verifies the partition of seeded defects. Incomplete
+   runs remain counted separately. Do not fill the records from an LLM verdict.
 
-Case states are `COMPLETE`, `INCOMPLETE`, `ORACLE_MISMATCH`, `TIMEOUT` or `ERROR`.
-`COMPLETE` means expected execution telemetry and deterministic rule IDs were
-observed. An unavailable Git executable, missing/malformed report, nonzero CLI exit
-or model failure cannot become a complete run. The runner returns `0` only when
-all selected cases are complete, `1` for a case failure and `2` for invalid command
-arguments or an unavailable output destination. These are runner exit semantics,
-not new semantics for the auditor CLI itself.
+A finding entry could use this shape (replace all four values from the actual
+reviewed response and contract):
 
-## Manual model review
+```json
+{"classification":"seeded","defect_id":"c05.1","quote":"exact response excerpt","reason":"file, condition and observed consequence"}
+```
 
-For each report, check whether both source files were actually supplied, then use
-the corresponding rubric to record:
+The score is **micro-averaged per stage across completed, manually reviewed
+cases**. A supported match to a named seed contributes one TP. Each unique
+unsupported finding contributes one FP. Every missed seed contributes one FN.
+Verified additional and ambiguous findings are counted separately and excluded
+from these seeded-task ratios. Precision is TP/(TP+FP), recall is TP/(TP+FN)
+and F1 is 2TP/(2TP+FP+FN). A zero denominator is reported as null. Always report
+counts, completion rate and exclusions next to ratios. The dataset is small and
+purpose-built; repeated runs and blind human review help characterize variance.
 
-- **Supported finding:** the answer identifies a concrete defective condition,
-  relevant file and consequence supported by the supplied evidence.
-- **Missed seeded defect:** the designated defect is absent or described only as
-  generic advice. Record missing/truncated evidence separately from reasoning errors.
-- **Unsupported finding:** the claim contradicts a supplied guard or contract, or
-  requires evidence the model did not receive. Count corrected counterparts as
-  opportunities to identify these false alarms, not as universally defect-free code.
-- **Unresolved finding:** a possible additional issue needs separate review; do not
-  automatically label every issue beyond the seeded defect false.
+The model receives the deterministic analyzer output. In c01 and c07 it can
+repeat a rule that the tool already reported. Report these rule-backed pairs
+(c01/c02 and c07/c08) separately when discussing independent semantic reasoning.
+For a semantic-only run, select the other cases with repeated `--case` options
+so its manifest and human judgments preserve that denominator.
 
-Compare critic-on and critic-off reports using the same model, parameters and
-input-file hashes, and repeat runs when investigating variability. These are
-separate model calls: their initial drafts can differ. The current CLI retains only
-the final report, so this comparison does **not** isolate the critic's causal effect
-on the exact same draft. A paired draft-level experiment is future work.
-
-Six cases are a regression/evaluation starting point, not a representative benchmark.
-Do not turn their completion rate into accuracy, security coverage or a claim that
-the critic improves review quality.
+[Full case contracts and rubrics](../examples/evaluation/cases.json)

@@ -55,6 +55,12 @@ as `DISABLED` and model review as `SKIPPED`. Only `Program.cs` is sampled initia
 the service file is not automatically reviewed in this mode. A finished report
 therefore does not mean that every file has been inspected.
 
+## Record the terminal demo
+
+Run `python scripts/demo.py --summary` in a clean terminal. This view prints the sampled files and findings from the real JSON sidecar. The replay below reveals the captured output one line at a time for readability. The playback pacing is editorial. The full captured [Markdown](example-report.md) and [JSON](example-report.json) pair retains its original bytes, timestamp and synthetic commit identifier.
+
+![Terminal replay of a deterministic audit showing three production configuration findings](terminal-demo.gif)
+
 ## 4. Try an actual model run
 
 If Ollama is running locally and the example model is installed:
@@ -79,7 +85,7 @@ location, a valid explanation, missed defects and unsupported findings.
 
 ## 5. Compare defective and corrected cases
 
-Run the [evaluation starter](evaluation.md) when you want to compare a defective
+Run the [evaluation suite](evaluation.md) when you want to compare a defective
 implementation with its corrected counterpart. Keep all reports, including failed
 or partial runs, and apply the manual rubric to the model findings.
 
@@ -90,6 +96,6 @@ Useful questions include:
 - Is the corrected counterpart still incorrectly reported as defective?
 - Did the critic change the result, and did that change help?
 
-The starter records execution evidence and deterministic expectations. Model
+The suite records execution evidence and deterministic expectations. Model
 accuracy and the benefit of a critic require a separate assessment; neither is
 inferred from a green test suite or a successful process exit.
