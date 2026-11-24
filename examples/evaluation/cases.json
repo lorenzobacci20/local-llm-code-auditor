@@ -1,13 +1,40 @@
 {
-  "version": 1,
+  "version": 2,
   "cases": [
     {
       "id": "c01",
       "pair": "p01",
       "topic": "Production configuration",
-      "expected_rule_ids": ["ASPNET_PROD_DETAILED_ERRORS", "ASPNET_PROD_LOCALHOST", "ASPNET_PROD_VERBOSE_LOGGING"],
+      "expected_rule_ids": [
+        "ASPNET_PROD_DETAILED_ERRORS",
+        "ASPNET_PROD_LOCALHOST",
+        "ASPNET_PROD_VERBOSE_LOGGING"
+      ],
       "expected_behavior": "Production settings should disable detailed errors, use a non-loopback API address and avoid Debug logging.",
-      "review_rubric": "Three intentionally configured risks. Their deterministic detection is evaluated separately from the model. Any additional LLM claim must have concrete evidence."
+      "review_rubric": "Three intentionally configured risks. Their deterministic detection is evaluated separately from the model. Any additional LLM claim must have concrete evidence.",
+      "contract": "Production settings disable detailed errors, use a non-loopback endpoint and keep the default log level at Warning.",
+      "counterpart": "c02",
+      "layout": "common",
+      "affected_files": [
+        "appsettings.Production.json"
+      ],
+      "defects": [
+        {
+          "id": "c01.1",
+          "description": "detailed errors enabled",
+          "consequence": "The production setting requests detailed errors."
+        },
+        {
+          "id": "c01.2",
+          "description": "loopback API endpoint",
+          "consequence": "Requests to the configured service target this host."
+        },
+        {
+          "id": "c01.3",
+          "description": "verbose production logging",
+          "consequence": "Debug events pass the configured default threshold."
+        }
+      ]
     },
     {
       "id": "c02",
@@ -15,7 +42,14 @@
       "topic": "Production configuration",
       "expected_rule_ids": [],
       "expected_behavior": "DetailedErrors is false, the reserved example-domain endpoint is non-loopback, and default logging is Warning.",
-      "review_rubric": "The three configuration risks from c01 are absent. Do not count invented configuration risks or requests to test the fictional endpoint as correct findings."
+      "review_rubric": "The three configuration risks from c01 are absent. Do not count invented configuration risks or requests to test the fictional endpoint as correct findings.",
+      "contract": "Production settings disable detailed errors, use a non-loopback endpoint and keep the default log level at Warning.",
+      "counterpart": "c01",
+      "layout": "common",
+      "affected_files": [
+        "appsettings.Production.json"
+      ],
+      "defects": []
     },
     {
       "id": "c03",
@@ -23,7 +57,20 @@
       "topic": "Per-item calculation",
       "expected_rule_ids": [],
       "expected_behavior": "Quantity zero must be rejected with ArgumentOutOfRangeException before dividing the non-negative total.",
-      "review_rubric": "PricingService.Calculate(10m, 0) passes the quantity < 0 guard and divides by zero. A correct semantic finding identifies the zero boundary and the missing <= 0 guard; merely recommending generic validation is insufficient."
+      "review_rubric": "PricingService.Calculate(10m, 0) passes the quantity < 0 guard and divides by zero. A correct semantic finding identifies the zero boundary and the missing <= 0 guard; merely recommending generic validation is insufficient.",
+      "contract": "Reject non-positive quantities with ArgumentOutOfRangeException before returning total divided by quantity.",
+      "counterpart": "c04",
+      "layout": "common",
+      "affected_files": [
+        "Services/PricingService.cs"
+      ],
+      "defects": [
+        {
+          "id": "c03.1",
+          "description": "zero quantity passes the guard",
+          "consequence": "Calculate(10m, 0) raises DivideByZeroException instead of the contractual ArgumentOutOfRangeException."
+        }
+      ]
     },
     {
       "id": "c04",
@@ -31,7 +78,14 @@
       "topic": "Per-item calculation",
       "expected_rule_ids": [],
       "expected_behavior": "Non-positive quantities are rejected before division; valid positive quantities yield the per-item price.",
-      "review_rubric": "The quantity <= 0 guard prevents the c03 defect. A zero-division finding that ignores this guard is unsupported. This does not certify unrelated behavior."
+      "review_rubric": "The quantity <= 0 guard prevents the c03 defect. A zero-division finding that ignores this guard is unsupported. This does not certify unrelated behavior.",
+      "contract": "Reject non-positive quantities with ArgumentOutOfRangeException before returning total divided by quantity.",
+      "counterpart": "c03",
+      "layout": "common",
+      "affected_files": [
+        "Services/PricingService.cs"
+      ],
+      "defects": []
     },
     {
       "id": "c05",
@@ -39,7 +93,20 @@
       "topic": "Quantity discount",
       "expected_rule_ids": [],
       "expected_behavior": "Ten or more items receive a ten percent discount: Calculate(10m, 10) must return 90m.",
-      "review_rubric": "The quantity > 10 condition excludes the documented boundary of ten and returns 100m. A correct finding identifies that threshold and its consequence."
+      "review_rubric": "The quantity > 10 condition excludes the documented boundary of ten and returns 100m. A correct finding identifies that threshold and its consequence.",
+      "contract": "For ten or more items, grant a ten percent discount on the extended price.",
+      "counterpart": "c06",
+      "layout": "common",
+      "affected_files": [
+        "Services/PricingService.cs"
+      ],
+      "defects": [
+        {
+          "id": "c05.1",
+          "description": "discount threshold excludes ten",
+          "consequence": "Calculate(10m, 10) returns 100m instead of 90m."
+        }
+      ]
     },
     {
       "id": "c06",
@@ -47,7 +114,305 @@
       "topic": "Quantity discount",
       "expected_rule_ids": [],
       "expected_behavior": "Ten items receive the discount; nine do not. Calculate(10m, 10) returns 90m and Calculate(10m, 9) returns 90m before any discount.",
-      "review_rubric": "The quantity >= 10 condition matches the documented threshold. Inventing a threshold defect is unsupported. This does not certify unrelated behavior."
+      "review_rubric": "The quantity >= 10 condition matches the documented threshold. Inventing a threshold defect is unsupported. This does not certify unrelated behavior.",
+      "contract": "For ten or more items, grant a ten percent discount on the extended price.",
+      "counterpart": "c05",
+      "layout": "common",
+      "affected_files": [
+        "Services/PricingService.cs"
+      ],
+      "defects": []
+    },
+    {
+      "id": "c07",
+      "expected_cli_exit": 1,
+      "pair": "p04",
+      "topic": "EF Core migration rollback",
+      "contract": "The AddLabel migration must support Up and Down. Review source artifacts only.",
+      "expected_behavior": "The rollback removes the column created by the forward change.",
+      "expected_rule_ids": [
+        "EF_MIGRATION_NOT_IMPLEMENTED"
+      ],
+      "affected_files": [
+        "Migrations/202501010900_AddLabel.cs"
+      ],
+      "defects": [
+        {
+          "id": "c07.1",
+          "description": "the migration rollback throws instead of removing the column",
+          "consequence": "Invoking Down throws before any rollback operation is added."
+        }
+      ],
+      "review_rubric": "Identify the NotImplementedException in Down and its effect on a requested rollback. Database applied state is outside the fixture.",
+      "layout": "ef",
+      "counterpart": "c08"
+    },
+    {
+      "id": "c08",
+      "pair": "p04",
+      "topic": "EF Core migration rollback",
+      "contract": "The AddLabel migration must support Up and Down. Review source artifacts only.",
+      "expected_behavior": "The rollback removes the column created by the forward change.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "Migrations/202501010900_AddLabel.cs"
+      ],
+      "defects": [],
+      "review_rubric": "The matching DropColumn implements the inverse operation. Database migration state requires separate evidence.",
+      "layout": "ef",
+      "counterpart": "c07"
+    },
+    {
+      "id": "c09",
+      "pair": "p05",
+      "topic": "Nullable display labels",
+      "contract": "A missing label displays as '(untitled)'. Preserve the supplied non-empty label after stripping surrounding whitespace.",
+      "expected_behavior": "For None, display_label returns '(untitled)'. For '  Oak  ', it returns 'Oak'.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "labels.py"
+      ],
+      "defects": [
+        {
+          "id": "c09.1",
+          "description": "null label triggers an exception",
+          "consequence": "display_label(None) raises AttributeError before applying the documented fallback."
+        }
+      ],
+      "review_rubric": "Require the relevant condition in labels.py and its observable consequence. display_label(None) raises AttributeError before applying the documented fallback.",
+      "layout": "standalone",
+      "counterpart": "c10"
+    },
+    {
+      "id": "c10",
+      "pair": "p05",
+      "topic": "Nullable display labels",
+      "contract": "A missing label displays as '(untitled)'. Preserve the supplied non-empty label after stripping surrounding whitespace.",
+      "expected_behavior": "For None, display_label returns '(untitled)'. For '  Oak  ', it returns 'Oak'.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "labels.py"
+      ],
+      "defects": [],
+      "review_rubric": "Check the implementation against the contract and identify any claimed regression contradicted by the correction. For None, display_label returns '(untitled)'. For '  Oak  ', it returns 'Oak'.",
+      "layout": "standalone",
+      "counterpart": "c09"
+    },
+    {
+      "id": "c11",
+      "pair": "p06",
+      "topic": "Shipment quantity parsing",
+      "contract": "Return None for malformed quantities and a positive integer for valid input.",
+      "expected_behavior": "parse_quantity('many') returns None and parse_quantity('3') returns 3.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "quantities.py"
+      ],
+      "defects": [
+        {
+          "id": "c11.1",
+          "description": "malformed text aborts the import",
+          "consequence": "An invalid numeric string raises ValueError and aborts the import."
+        }
+      ],
+      "review_rubric": "Require the relevant condition in quantities.py and its observable consequence. An invalid numeric string raises ValueError and aborts the import.",
+      "layout": "standalone",
+      "counterpart": "c12"
+    },
+    {
+      "id": "c12",
+      "pair": "p06",
+      "topic": "Shipment quantity parsing",
+      "contract": "Return None for malformed quantities and a positive integer for valid input.",
+      "expected_behavior": "parse_quantity('many') returns None and parse_quantity('3') returns 3.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "quantities.py"
+      ],
+      "defects": [],
+      "review_rubric": "Check the implementation against the contract and identify any claimed regression contradicted by the correction. parse_quantity('many') returns None and parse_quantity('3') returns 3.",
+      "layout": "standalone",
+      "counterpart": "c11"
+    },
+    {
+      "id": "c13",
+      "pair": "p07",
+      "topic": "Concurrent reservation ordering",
+      "contract": "While one reservation is waiting for its receipt, a second caller must see the previously reserved stock.",
+      "expected_behavior": "With one unit remaining, concurrent reserve calls return one True and one False, leaving zero units.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "reservations.py"
+      ],
+      "defects": [
+        {
+          "id": "c13.1",
+          "description": "two reservations consume one unit",
+          "consequence": "Both coroutines check the last unit before either decrements it, so both issue receipts."
+        }
+      ],
+      "review_rubric": "Require the relevant condition in reservations.py and its observable consequence. Both coroutines check the last unit before either decrements it, so both issue receipts.",
+      "layout": "standalone",
+      "counterpart": "c14"
+    },
+    {
+      "id": "c14",
+      "pair": "p07",
+      "topic": "Concurrent reservation ordering",
+      "contract": "While one reservation is waiting for its receipt, a second caller must see the previously reserved stock.",
+      "expected_behavior": "With one unit remaining, concurrent reserve calls return one True and one False, leaving zero units.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "reservations.py"
+      ],
+      "defects": [],
+      "review_rubric": "Check the implementation against the contract and identify any claimed regression contradicted by the correction. With one unit remaining, concurrent reserve calls return one True and one False, leaving zero units.",
+      "layout": "standalone",
+      "counterpart": "c13"
+    },
+    {
+      "id": "c15",
+      "pair": "p08",
+      "topic": "Atomic import of account entries",
+      "contract": "Apply a valid batch of integer deltas in order. A balance below zero rejects the entire batch and leaves the opening balance intact.",
+      "expected_behavior": "Applying [+2, -9] to a balance of 5 raises ValueError and preserves 5.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "ledger.py"
+      ],
+      "defects": [
+        {
+          "id": "c15.1",
+          "description": "a rejected batch leaves a partial update",
+          "consequence": "A valid first delta is visible in the ledger even after a later delta rejects the batch."
+        }
+      ],
+      "review_rubric": "Require the relevant condition in ledger.py and its observable consequence. A valid first delta is visible in the ledger even after a later delta rejects the batch.",
+      "layout": "standalone",
+      "counterpart": "c16"
+    },
+    {
+      "id": "c16",
+      "pair": "p08",
+      "topic": "Atomic import of account entries",
+      "contract": "Apply a valid batch of integer deltas in order. A balance below zero rejects the entire batch and leaves the opening balance intact.",
+      "expected_behavior": "Applying [+2, -9] to a balance of 5 raises ValueError and preserves 5.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "ledger.py"
+      ],
+      "defects": [],
+      "review_rubric": "Check the implementation against the contract and identify any claimed regression contradicted by the correction. Applying [+2, -9] to a balance of 5 raises ValueError and preserves 5.",
+      "layout": "standalone",
+      "counterpart": "c15"
+    },
+    {
+      "id": "c17",
+      "pair": "p09",
+      "topic": "Output stream ownership",
+      "contract": "Close the owned stream even when formatting or writing the row fails. Surface the original error.",
+      "expected_behavior": "An OSError from write propagates and the owned stream is closed exactly once.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "exports.py"
+      ],
+      "defects": [
+        {
+          "id": "c17.1",
+          "description": "a write error leaks the owned stream",
+          "consequence": "The exception path skips close(), retaining an open stream."
+        }
+      ],
+      "review_rubric": "Require the relevant condition in exports.py and its observable consequence. The exception path skips close(), retaining an open stream.",
+      "layout": "standalone",
+      "counterpart": "c18"
+    },
+    {
+      "id": "c18",
+      "pair": "p09",
+      "topic": "Output stream ownership",
+      "contract": "Close the owned stream even when formatting or writing the row fails. Surface the original error.",
+      "expected_behavior": "An OSError from write propagates and the owned stream is closed exactly once.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "exports.py"
+      ],
+      "defects": [],
+      "review_rubric": "Check the implementation against the contract and identify any claimed regression contradicted by the correction. An OSError from write propagates and the owned stream is closed exactly once.",
+      "layout": "standalone",
+      "counterpart": "c17"
+    },
+    {
+      "id": "c19",
+      "pair": "p10",
+      "topic": "Inclusive invoice adjustment",
+      "contract": "Apply a one-unit credit to invoices whose subtotal is at least 100. Smaller invoices keep their subtotal.",
+      "expected_behavior": "An invoice with one 100-unit line costs 99. One 99-unit line costs 99.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "rounding.py",
+        "invoice_service.py"
+      ],
+      "defects": [
+        {
+          "id": "c19.1",
+          "description": "the credit is missing at the inclusive threshold",
+          "consequence": "A subtotal of exactly 100 is charged at 100 rather than 99."
+        }
+      ],
+      "review_rubric": "Require the relevant condition in rounding.py and its observable consequence. A subtotal of exactly 100 is charged at 100 rather than 99.",
+      "layout": "invoice",
+      "counterpart": "c20",
+      "initial_max_files": 3,
+      "selector_target": "rounding.py"
+    },
+    {
+      "id": "c20",
+      "pair": "p10",
+      "topic": "Inclusive invoice adjustment",
+      "contract": "Apply a one-unit credit to invoices whose subtotal is at least 100. Smaller invoices keep their subtotal.",
+      "expected_behavior": "An invoice with one 100-unit line costs 99. One 99-unit line costs 99.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "rounding.py",
+        "invoice_service.py"
+      ],
+      "defects": [],
+      "review_rubric": "Check the implementation against the contract and identify any claimed regression contradicted by the correction. An invoice with one 100-unit line costs 99. One 99-unit line costs 99.",
+      "layout": "invoice",
+      "counterpart": "c19",
+      "initial_max_files": 3,
+      "selector_target": "rounding.py"
+    },
+    {
+      "id": "c21",
+      "pair": null,
+      "topic": "Approval role normalization",
+      "contract": "Only a normalized reviewer role may approve an entry. Other roles leave it pending.",
+      "expected_behavior": "Whitespace and case variation on the reviewer role yield approved. A viewer or an absent role yields pending.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "approvals.py"
+      ],
+      "defects": [],
+      "review_rubric": "A claim that any non-empty role approves is contradicted by the membership predicate. Treat style preferences as outside the rubric.",
+      "layout": "standalone",
+      "counterpart": null
+    },
+    {
+      "id": "c22",
+      "pair": null,
+      "topic": "Empty-window aggregation",
+      "contract": "The average of an empty window is absent. A non-empty window containing zero has a numeric average.",
+      "expected_behavior": "mean([]) returns None and mean([0]) returns zero.",
+      "expected_rule_ids": [],
+      "affected_files": [
+        "windows.py"
+      ],
+      "defects": [],
+      "review_rubric": "The explicit empty-window guard precedes division. A zero element is an observation, so it contributes to the divisor.",
+      "layout": "standalone",
+      "counterpart": null
     }
   ]
 }
