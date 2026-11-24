@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from fnmatch import fnmatch
 from pathlib import Path
 
+from .paths import local_path
+from .privacy import redact
 from .process import run
 
 DEFAULT_DISCOVERY_EXCLUDE_DIR_GLOBS: tuple[str, ...] = (
@@ -105,20 +108,23 @@ def discover_repositories(
         base_depth = len(root.parts)
         candidates: set[Path] = set()
 
-        if (root / ".git").exists():
-            candidates.add(root)
-
-        try:
-            markers = root.rglob(".git")
-            for marker in markers:
-                repo_candidate = marker.parent
-                if len(repo_candidate.parts) - base_depth > max_depth:
-                    continue
-                if _excluded_relative_path(repo_candidate, root, exclude_dir_globs):
-                    continue
-                candidates.add(repo_candidate)
-        except OSError:
-            pass
+        for folder, dirs, files in os.walk(root, followlinks=False):
+            parent = Path(folder)
+            marker = parent / ".git"
+            if (".git" in dirs and local_path(root, marker, directory=True)) or (
+                ".git" in files and local_path(root, marker)
+            ):
+                candidates.add(parent)
+            if len(parent.parts) - base_depth >= max_depth:
+                dirs.clear()
+                continue
+            dirs[:] = [
+                name
+                for name in dirs
+                if name != ".git"
+                and not _excluded_relative_path(parent / name, root, exclude_dir_globs)
+                and local_path(root, parent / name, directory=True)
+            ]
 
         for candidate in candidates:
             if candidate != root and _excluded_relative_path(candidate, root, exclude_dir_globs):
@@ -146,33 +152,48 @@ def discover_repositories(
 def snapshot(repo: Path, max_diff_chars: int, include_untracked_names: bool = True) -> RepoSnapshot:
     repo = resolve_repository(repo)
 
-    status_args = ["git", "status", "--short"]
+    def checked(args: list[str]) -> str:
+        result = run(["git", *args], repo, 60)
+        if not result.ok:
+            raise RepositoryPathError(f"Git {args[0]} failed (exit {result.returncode})")
+        return result.stdout
+
+    status_args = ["status", "--short", "--ignore-submodules=all"]
     if not include_untracked_names:
         status_args.append("--untracked-files=no")
-    status = run(status_args, repo, 60).stdout.strip()
+    status = redact(checked(status_args).rstrip())
 
-    unstaged = run(
-        ["git", "diff", "--no-ext-diff", "--no-textconv", "--unified=3"], repo, 60
-    ).stdout
-    staged = run(
-        ["git", "diff", "--cached", "--no-ext-diff", "--no-textconv", "--unified=3"], repo, 60
-    ).stdout
+    diff_args = ["--no-ext-diff", "--no-textconv", "--ignore-submodules=all", "--unified=3"]
+    unstaged = checked(["diff", *diff_args])
+    staged = checked(["diff", "--cached", *diff_args])
     raw_diff = (unstaged + "\n" + staged).strip()
     diff_chars_original = len(raw_diff)
-    diff_truncated = diff_chars_original > max_diff_chars
-    diff = raw_diff
+    diff = redact(raw_diff)
+    diff_truncated = len(diff) > max_diff_chars
     if diff_truncated:
-        diff = raw_diff[:max_diff_chars] + "\n\n[diff truncated by Local LLM Code Auditor]"
+        diff = diff[:max_diff_chars]
 
-    recent_log = run(
-        ["git", "log", "--since=24.hours", "--pretty=format:%h %ad %s", "--date=iso", "-n", "30"],
-        repo,
-        60,
-    ).stdout.strip()
-
-    branch_result = run(["git", "branch", "--show-current"], repo, 60)
-    branch = branch_result.stdout.strip() or "(detached HEAD)"
-    head = run(["git", "rev-parse", "--short=12", "HEAD"], repo, 60).stdout.strip() or "unknown"
+    branch = redact(checked(["branch", "--show-current"]).strip()) or "(detached HEAD)"
+    # Git log exits nonzero on a repository with an unborn branch.
+    head_result = run(["git", "rev-parse", "--verify", "--quiet", "--short=12", "HEAD"], repo, 60)
+    if head_result.returncode not in {0, 1}:
+        raise RepositoryPathError(f"Git rev-parse failed (exit {head_result.returncode})")
+    head = head_result.stdout.strip() or "unborn"
+    recent_log = ""
+    if head_result.ok:
+        recent_log = redact(
+            checked(
+                [
+                    "log",
+                    "--no-show-signature",
+                    "--since=24.hours",
+                    "--pretty=format:%h %ad %s",
+                    "--date=iso",
+                    "-n",
+                    "30",
+                ]
+            ).strip()
+        )
 
     return RepoSnapshot(
         path=repo,

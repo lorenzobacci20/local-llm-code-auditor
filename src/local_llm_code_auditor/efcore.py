@@ -5,7 +5,8 @@ import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from pathlib import Path
 
-from .static_analysis import StaticFinding, is_ignored_path, relative_path
+from .paths import repository_files
+from .static_analysis import StaticFinding, relative_path
 
 _EF_PACKAGE_PREFIX = "microsoft.entityframeworkcore"
 _DBCONTEXT_RE = re.compile(r"\bclass\s+\w+\s*:\s*[^{\n]*\bDbContext\b")
@@ -87,9 +88,7 @@ def _changed_paths(status: str) -> set[str]:
 def audit(repo: Path, git_status: str = "") -> EfCoreAudit:
     projects: list[str] = []
     package_names: set[str] = set()
-    for project in repo.rglob("*.csproj"):
-        if is_ignored_path(project):
-            continue
+    for project in repository_files(repo, "*.csproj"):
         packages = _package_references(project)
         ef_packages = [p for p in packages if p.lower().startswith(_EF_PACKAGE_PREFIX)]
         if ef_packages:
@@ -97,9 +96,7 @@ def audit(repo: Path, git_status: str = "") -> EfCoreAudit:
             package_names.update(ef_packages)
 
     dbcontexts: list[str] = []
-    for source in repo.rglob("*.cs"):
-        if is_ignored_path(source):
-            continue
+    for source in repository_files(repo, "*.cs"):
         try:
             text = source.read_text(encoding="utf-8", errors="replace")
         except OSError:
@@ -115,11 +112,9 @@ def audit(repo: Path, git_status: str = "") -> EfCoreAudit:
     snapshots: list[str] = []
     findings: list[StaticFinding] = []
 
-    for source in repo.rglob("*.cs"):
-        if is_ignored_path(source):
-            continue
+    for source in repository_files(repo, "*.cs"):
         rel = relative_path(repo, source)
-        if not any(part.lower() == "migrations" for part in source.parts):
+        if not any(part.lower() == "migrations" for part in source.relative_to(repo).parts[:-1]):
             continue
         if source.name.endswith("ModelSnapshot.cs"):
             snapshots.append(rel)

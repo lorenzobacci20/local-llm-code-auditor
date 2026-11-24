@@ -30,7 +30,7 @@ def test_source_review_prioritizes_changed_source(tmp_path: Path):
     assert "class Feature" in review.text
 
 
-def test_source_review_preserves_sensitive_literals_for_local_model(tmp_path: Path):
+def test_source_review_redacts_sensitive_literals_before_sampling(tmp_path: Path):
     repo = tmp_path / "repo"
     _init_repo(repo)
     secret = "local-review-secret-value"
@@ -41,9 +41,10 @@ def test_source_review_preserves_sensitive_literals_for_local_model(tmp_path: Pa
 
     review = collect(repo, max_files=2, max_chars=10_000, max_file_chars=10_000)
 
-    assert secret in review.text
-    assert "REDACTED" not in review.text
-    assert "DISABLED_LOCAL_OLLAMA_TRUST_BOUNDARY" in review.evidence_text()
+    assert secret not in review.text
+    assert "[REDACTED]" in review.text
+    assert review.redacted_lines == 1
+    assert "BEST_EFFORT_BEFORE_TRUNCATION" in review.evidence_text()
 
 
 def test_source_review_respects_total_budget(tmp_path: Path):

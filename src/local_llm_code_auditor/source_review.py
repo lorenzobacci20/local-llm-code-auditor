@@ -5,6 +5,8 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 from .git import DEFAULT_DISCOVERY_EXCLUDE_DIR_GLOBS
+from .paths import local_path
+from .privacy import redact_with_count
 from .process import run
 
 _SOURCE_EXTENSIONS = {
@@ -120,8 +122,7 @@ class SourceReview:
             "Coverage: BOUNDED_SELECTED_SOURCE_FILES_NOT_WHOLE_REPOSITORY",
             "Selection strategy: CHANGED_FIRST_THEN_ARCHITECTURAL_DIVERSITY_WITH_OPTIONAL_TARGETED_FOLLOWUP",
             "Vendor/generated source: EXCLUDED_UNLESS_CHANGED_WHEN_APPLICABLE",
-            "Source secret pre-redaction: DISABLED_LOCAL_OLLAMA_TRUST_BOUNDARY",
-            "Confidentiality rule: source values may be inspected by the local model for security analysis, but secret values must never be quoted, reproduced, or written into the Markdown report.",
+            "Source secret pre-redaction: BEST_EFFORT_BEFORE_TRUNCATION",
             "Review discipline: never claim that unselected source is defect-free or that there is no unreviewed critical logic.",
             "Review discipline: before reporting an input-validation or safety defect, check supplied nearby guards, allowlists, normalization, and counter-evidence.",
             "Review discipline: never claim two source artifacts are consistent/matching unless both required artifacts are actually present in the supplied source evidence or a deterministic analyzer explicitly established that relationship.",
@@ -153,7 +154,7 @@ def adaptive_source_budget(
 ) -> int:
     if configured_max_chars <= 0 or num_ctx <= 0:
         return 0
-    safety_tokens = max(8_192, num_ctx // 8)
+    safety_tokens = max(256, num_ctx // 8)
     available_input_tokens = max(0, num_ctx - num_predict - safety_tokens)
     target_prompt_chars = int(available_input_tokens * _CHARS_PER_TOKEN_ESTIMATE)
     available_chars = max(0, target_prompt_chars - max(0, base_prompt_chars))
@@ -169,17 +170,20 @@ def _excluded(path: Path, repo: Path, patterns: tuple[str, ...]) -> bool:
 
 
 def _git_paths(repo: Path, args: list[str]) -> tuple[str, ...]:
-    result = run(["git", *args], repo, 60)
+    result = run(["git", *args, "-z"], repo, 60)
     if not result.ok:
         return ()
     return tuple(
-        line.strip().replace("\\", "/") for line in result.stdout.splitlines() if line.strip()
+        name
+        for name in result.stdout.split("\0")
+        if name and "\\" not in name and name.isprintable()
     )
 
 
 def _changed_paths(repo: Path) -> set[str]:
-    changed = set(_git_paths(repo, ["diff", "--name-only"]))
-    changed.update(_git_paths(repo, ["diff", "--cached", "--name-only"]))
+    flags = ["--no-ext-diff", "--no-textconv", "--ignore-submodules=all", "--name-only"]
+    changed = set(_git_paths(repo, ["diff", *flags]))
+    changed.update(_git_paths(repo, ["diff", "--cached", *flags]))
     changed.update(_git_paths(repo, ["ls-files", "--others", "--exclude-standard"]))
     return {item.lower() for item in changed}
 
@@ -214,11 +218,7 @@ def _candidate_paths(
             continue
         if _source_specific_excluded(path, repo, changed):
             continue
-        if (
-            path.is_file()
-            and not path.is_symlink()
-            and path.resolve().is_relative_to(repo.resolve())
-        ):
+        if local_path(repo, path):
             candidates.append(path)
     return tuple(candidates)
 
@@ -324,26 +324,20 @@ def _select_candidates(
 def _bounded_file(text: str, limit: int) -> tuple[str, bool]:
     if len(text) <= limit:
         return text, False
-    head = max(1, limit // 2)
-    tail = max(1, limit - head)
-    return (
-        text[:head]
-        + "\n\n[... source file middle truncated by Local LLM Code Auditor ...]\n\n"
-        + text[-tail:],
-        True,
-    )
+    marker = "\n[... truncated ...]\n"
+    available = limit - len(marker)
+    if available < 2:
+        return text[: max(0, limit)], True
+    head = (available + 1) // 2
+    return text[:head] + marker + text[-(available - head) :], True
 
 
 def _safe_candidate_path(repo: Path, rel: str, allowed: set[str]) -> Path | None:
     normalized = rel.strip().replace("\\", "/")
     if normalized not in allowed:
         return None
-    path = (repo / normalized).resolve()
-    try:
-        path.relative_to(repo.resolve())
-    except ValueError:
-        return None
-    return path if path.is_file() else None
+    path = repo / normalized
+    return path if local_path(repo, path) else None
 
 
 def collect(
@@ -366,6 +360,7 @@ def collect(
     sections: list[str] = []
     categories: list[str] = []
     total_original = 0
+    redacted_lines = 0
     truncated = False
     used = 0
 
@@ -373,7 +368,7 @@ def collect(
         if max_chars <= 0:
             truncated = bool(candidates)
             break
-        if path.is_symlink() or not path.resolve().is_relative_to(repo.resolve()):
+        if not local_path(repo, path):
             continue
         try:
             raw = path.read_bytes()
@@ -383,24 +378,26 @@ def collect(
             continue
         text = raw.decode("utf-8", errors="replace")
         total_original += len(text)
+        text, masked = redact_with_count(text)
+        redacted_lines += masked
         text, file_truncated = _bounded_file(text, max_file_chars)
         truncated = truncated or file_truncated
 
         rel = path.relative_to(repo).as_posix()
         block = f"\n--- SOURCE FILE: {rel} ---\n{text}\n--- END SOURCE FILE: {rel} ---"
-        remaining = max_chars - used
+        remaining = max_chars - used - bool(sections)
         if remaining <= 0:
             truncated = True
             break
         if len(block) > remaining:
-            block = block[:remaining] + "\n[... source evidence truncated by total budget ...]"
+            block = block[:remaining]
             truncated = True
         sections.append(block)
         selected.append(rel)
         category = _category(repo, path)
         if category not in categories:
             categories.append(category)
-        used += len(block)
+        used += len(block) + (len(sections) > 1)
         if used >= max_chars:
             break
 
@@ -410,6 +407,7 @@ def collect(
         files=tuple(selected),
         text="\n".join(sections),
         chars_original=total_original,
+        redacted_lines=redacted_lines,
         truncated=truncated,
         budget_chars=max_chars,
         candidate_count=len(candidates),
@@ -437,6 +435,7 @@ def extend_with_followup(
     followup: list[str] = []
     categories = list(review.categories)
     total_original = review.chars_original
+    redacted_lines = review.redacted_lines
     truncated = review.truncated
     used = len(review.text)
 
@@ -446,7 +445,7 @@ def extend_with_followup(
         path = _safe_candidate_path(repo, rel, allowed)
         if path is None:
             continue
-        remaining = total_max_chars - used
+        remaining = total_max_chars - used - bool(sections)
         if remaining <= 0:
             truncated = True
             break
@@ -459,25 +458,24 @@ def extend_with_followup(
             continue
         text = raw.decode("utf-8", errors="replace")
         total_original += len(text)
+        text, masked = redact_with_count(text)
+        redacted_lines += masked
         text, file_truncated = _bounded_file(text, max_file_chars)
         truncated = truncated or file_truncated
 
-        canonical = path.relative_to(repo.resolve()).as_posix()
+        canonical = path.relative_to(repo).as_posix()
         block = f"\n--- FOLLOW-UP SOURCE FILE: {canonical} ---\n{text}\n--- END FOLLOW-UP SOURCE FILE: {canonical} ---"
         if len(block) > remaining:
-            block = (
-                block[:remaining]
-                + "\n[... follow-up source evidence truncated by total budget ...]"
-            )
+            block = block[:remaining]
             truncated = True
         sections.append(block)
         selected.append(canonical)
         followup.append(canonical)
         already.add(canonical)
-        category = _category(repo.resolve(), path)
+        category = _category(repo, path)
         if category not in categories:
             categories.append(category)
-        used += len(block)
+        used += len(block) + (len(sections) > 1)
         if used >= total_max_chars:
             break
 
@@ -487,7 +485,7 @@ def extend_with_followup(
         text="\n".join(section for section in sections if section),
         chars_original=total_original,
         truncated=truncated,
-        redacted_lines=review.redacted_lines,
+        redacted_lines=redacted_lines,
         budget_chars=total_max_chars,
         candidate_count=review.candidate_count,
         categories=tuple(categories),

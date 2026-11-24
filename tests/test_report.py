@@ -1,6 +1,33 @@
+import hashlib
+import json
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta, timezone
 
-from local_llm_code_auditor.report import EvidenceBundle, ReportMetadata, write_report
+from local_llm_code_auditor.report import (
+    EvidenceBundle,
+    ReportMetadata,
+    _model_findings,
+    render_repo_section,
+    write_report,
+)
+
+
+def test_concurrent_writers_preserve_every_complete_report_pair(tmp_path):
+    now = datetime(2026, 9, 2, tzinfo=timezone.utc)
+    with ThreadPoolExecutor(4) as pool:
+        paths = list(pool.map(lambda n: write_report(tmp_path, "repo", str(n), now=now), range(8)))
+    assert len(set(paths)) == 8
+    for path in paths:
+        record = json.loads(path.with_suffix(".json").read_text(encoding="utf-8"))
+        assert record["markdown_sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_untrusted_model_markdown_is_literal_and_duplicate_claims_are_indexed_once():
+    line = "- HIGH | sample.py | count < 0 | guard | failure | change guard"
+    output = f"## Findings\n{line}\n{line}\n```\n![tracking](https://example.invalid/test)"
+    assert "\n````text\n" in render_repo_section("repo", output)
+    items = _model_findings(output)
+    assert len(items) == 1 and items[0]["verification"] == "unverified"
 
 
 def _metadata() -> ReportMetadata:

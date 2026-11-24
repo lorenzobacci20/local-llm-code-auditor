@@ -14,10 +14,13 @@ from .git import RepositoryPathError, discover_repositories, resolve_repository,
 from .llm_review import (
     CRITIC_SYSTEM_PROMPT,
     FOLLOWUP_SYSTEM_PROMPT,
+    bound_evidence,
     critic_user_prompt,
-    followup_user_prompt,
+    input_limit,
     parse_followup_files,
     remaining_inventory,
+    selector_array,
+    selector_input,
 )
 from .ollama import OllamaError, OllamaResult, chat, validate_local_url
 from .report import SYSTEM_PROMPT, ReportMetadata, prompt_for, render_repo_section, write_report
@@ -44,6 +47,16 @@ def build_parser() -> argparse.ArgumentParser:
         "--skip-build", action="store_true", help="Explicitly keep the default static-only mode"
     )
     parser.add_argument("--no-llm", action="store_true", help="Collect deterministic evidence only")
+    parser.add_argument(
+        "--capture-draft",
+        action="store_true",
+        help="Retain the original draft and completed critic reply in the JSON report",
+    )
+    parser.add_argument(
+        "--strict-pipeline",
+        action="store_true",
+        help="Return 3 for incomplete requested model stages",
+    )
     parser.add_argument("--model", help="Override the configured Ollama model for this run")
     parser.add_argument(
         "--num-ctx", type=int, help="Override requested Ollama context for this run"
@@ -70,6 +83,18 @@ def main() -> int:
         model = args.model or config.model
         num_ctx = _positive_override("--num-ctx", args.num_ctx, config.num_ctx)
         num_predict = _positive_override("--num-predict", args.num_predict, config.num_predict)
+        audit_limit = input_limit(num_ctx, num_predict, SYSTEM_PROMPT)
+        critic_limit = input_limit(num_ctx, num_predict, CRITIC_SYSTEM_PROMPT)
+        if (
+            not args.no_llm
+            and min(
+                audit_limit, critic_limit if config.source_review_critic_enabled else audit_limit
+            )
+            < 256
+        ):
+            raise ValueError(
+                "Context is too small for the system prompt and reserved output; reduce num_predict or adjust num_ctx"
+            )
     except (OSError, ValueError, TypeError, OllamaError) as exc:
         print(str(exc), file=sys.stderr)
         return 2
@@ -104,7 +129,7 @@ def main() -> int:
             snap = snapshot(repo, config.max_diff_chars, config.include_untracked_names)
         except RepositoryPathError as exc:
             print(f"Cannot audit {repo}: {exc}", file=sys.stderr)
-            overall_exit = 2
+            overall_exit = max(overall_exit, 2)
             continue
 
         dotnet_result = (
@@ -182,29 +207,39 @@ def main() -> int:
 
         selector_result: OllamaResult | None = None
         selector_status = "SKIPPED"
+        clipped = {"audit": False, "critic": False, "selector": False}
+        selector_paths_offered = 0
         if followup_possible and remaining_inventory(source_review_result):
             remaining_chars = max(0, source_budget - len(source_review_result.text))
             followup_chars = min(config.source_review_followup_max_chars, remaining_chars)
             if followup_chars > 0:
                 try:
+                    selector_tokens = min(1_024, num_predict)
+                    prompt, offered, clipped["selector"] = selector_input(
+                        initial_llm_input,
+                        source_review_result,
+                        config.source_review_followup_max_files,
+                        input_limit(num_ctx, selector_tokens, FOLLOWUP_SYSTEM_PROMPT),
+                    )
+                    selector_paths_offered = len(offered)
+                    if not offered:
+                        raise OllamaError("No allowlisted path fits the selector input budget")
                     selector_result = chat(
                         config.ollama_url,
                         model,
                         FOLLOWUP_SYSTEM_PROMPT,
-                        followup_user_prompt(
-                            initial_llm_input,
-                            source_review_result,
-                            config.source_review_followup_max_files,
-                        ),
+                        prompt,
                         num_ctx=num_ctx,
-                        num_predict=min(1_024, num_predict),
+                        num_predict=selector_tokens,
                         timeout=config.llm_timeout_seconds,
                         think=config.think,
                     )
                     selector_status = "COMPLETE" if selector_result.complete else "PARTIAL"
+                    if selector_result.complete and selector_array(selector_result.content) is None:
+                        raise OllamaError("Selector response did not contain a JSON array")
                     requested = parse_followup_files(
                         selector_result.content,
-                        allowed_files=remaining_inventory(source_review_result),
+                        allowed_files=offered if selector_result.complete else (),
                         already_selected=source_review_result.files,
                         max_files=config.source_review_followup_max_files,
                     )
@@ -225,6 +260,8 @@ def main() -> int:
                 except OllamaError as exc:
                     selector_status = "ERROR_FALLBACK"
                     print(f"Follow-up source selector failed for {repo}: {exc}", file=sys.stderr)
+            else:
+                selector_status = "SKIPPED_BUDGET"
         elif followup_possible:
             selector_status = "SKIPPED_NO_REMAINING_FILES"
         elif config.source_review_followup_enabled and args.no_llm:
@@ -241,11 +278,19 @@ def main() -> int:
             source_review=source_review_result,
         )
         llm_input = compose_llm_input(durable_context, evidence.text)
+        if not args.no_llm:
+            # Reserve draft space before the audit so both passes can see identical evidence.
+            evidence_limit = audit_limit
+            if config.source_review_critic_enabled:
+                evidence_limit = min(
+                    audit_limit, critic_limit - min(critic_limit // 2, num_predict * 4) - 64
+                )
+            llm_input, clipped["audit"] = bound_evidence(llm_input, evidence_limit)
 
         ollama_result: OllamaResult | None = None
         critic_result: OllamaResult | None = None
         critic_status = "SKIPPED"
-        final_report_source = "DRAFT"
+        final_report_source = "NONE"
 
         if args.no_llm:
             analysis = (
@@ -271,17 +316,24 @@ def main() -> int:
                 )
                 draft = ollama_result.content
                 analysis = draft
+                final_report_source = "DRAFT"
                 llm_status = "COMPLETE" if ollama_result.complete else "PARTIAL"
                 if not ollama_result.complete:
                     overall_exit = max(overall_exit, 1)
 
                 if config.source_review_critic_enabled and ollama_result.complete:
                     try:
+                        critic_prompt = critic_user_prompt(llm_input, draft)
+                        if len(critic_prompt.encode("utf-8")) > critic_limit:
+                            clipped["critic"] = True
+                            raise OllamaError(
+                                "Evidence and complete draft exceed critic input budget"
+                            )
                         critic_result = chat(
                             config.ollama_url,
                             model,
                             CRITIC_SYSTEM_PROMPT,
-                            critic_user_prompt(llm_input, draft),
+                            critic_prompt,
                             num_ctx=num_ctx,
                             num_predict=num_predict,
                             timeout=config.llm_timeout_seconds,
@@ -312,8 +364,19 @@ def main() -> int:
                 critic_status = "SKIPPED_AUDIT_ERROR"
                 overall_exit = max(overall_exit, 1)
 
+        if (
+            args.strict_pipeline
+            and not args.no_llm
+            and (
+                llm_status != "COMPLETE"
+                or "FALLBACK" in critic_status
+                or selector_status in {"ERROR_FALLBACK", "PARTIAL", "SKIPPED_BUDGET"}
+            )
+        ):
+            overall_exit = max(overall_exit, 3)
+
         metadata = ReportMetadata(
-            repo_path=str(snap.path),
+            repo_path=snap.path.name,
             branch=snap.branch,
             head=snap.head,
             model=model,
@@ -325,20 +388,28 @@ def main() -> int:
             efcore=efcore_result,
             source_review=source_review_result,
             context_status=durable_context.status,
-            context_root=str(durable_context.root) if durable_context.root is not None else None,
+            context_root="configured directory" if durable_context.root is not None else None,
             context_files=durable_context.files,
             context_chars=durable_context.total_chars,
             context_truncated=durable_context.truncated,
-            prompt_chars=len(llm_input),
+            prompt_chars=len(llm_input) if not args.no_llm else 0,
             ollama=ollama_result,
             selector_status=selector_status,
             selector_ollama=selector_result,
             critic_status=critic_status,
             critic_ollama=critic_result,
             final_report_source=final_report_source,
+            capture_draft=args.capture_draft,
+            input_clipped=clipped,
+            selector_paths_offered=selector_paths_offered,
         )
         section = render_repo_section(repo.name, analysis)
-        report_path = write_report(config.report_dir, repo.name, section, metadata=metadata)
+        try:
+            report_path = write_report(config.report_dir, repo.name, section, metadata=metadata)
+        except OSError as exc:
+            print(f"Could not save audit report ({type(exc).__name__})", file=sys.stderr)
+            overall_exit = max(overall_exit, 3)
+            continue
         print(f"Report written to {report_path}")
 
     return overall_exit
