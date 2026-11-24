@@ -5,7 +5,7 @@ from fnmatch import fnmatch
 from pathlib import Path
 
 from .git import DEFAULT_DISCOVERY_EXCLUDE_DIR_GLOBS
-from .paths import local_path
+from .paths import local_path, read_evidence_file
 from .privacy import redact_with_count
 from .process import run
 
@@ -371,8 +371,11 @@ def collect(
         if not local_path(repo, path):
             continue
         try:
-            raw = path.read_bytes()
+            raw = read_evidence_file(path)
         except OSError:
+            continue
+        if raw is None:
+            truncated = True
             continue
         if b"\x00" in raw:
             continue
@@ -451,8 +454,11 @@ def extend_with_followup(
             break
 
         try:
-            raw = path.read_bytes()
+            raw = read_evidence_file(path)
         except OSError:
+            continue
+        if raw is None:
+            truncated = True
             continue
         if b"\x00" in raw:
             continue

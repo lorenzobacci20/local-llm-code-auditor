@@ -4,7 +4,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from .paths import local_path
+from .paths import local_path, read_evidence_file
 from .privacy import redact
 
 _PROJECT_FILES = (
@@ -102,7 +102,10 @@ def _append_file(
         return "", relative, True
 
     try:
-        content = redact(path.read_text(encoding="utf-8")).strip()
+        data = read_evidence_file(path)
+        if data is None:
+            return "", relative, True
+        content = redact(data.decode("utf-8")).strip()
     except (OSError, UnicodeError):
         return "", relative, False
 
@@ -141,7 +144,7 @@ def load_context(context_root: Path | None, repo_name: str, max_chars: int) -> C
         section, relative, file_truncated = _append_file(context_root, path, remaining - separator)
         if not section:
             truncated = truncated or file_truncated
-            break
+            continue
         sections.append(section)
         files.append(relative)
         remaining -= len(section) + separator

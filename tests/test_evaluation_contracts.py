@@ -123,13 +123,14 @@ def test_output_stream_closed_on_failure(case_id):
 
 @pytest.mark.parametrize("case_id", ["c19", "c20"])
 def test_invoice_through_public_handler(case_id, tmp_path):
-    materialize(CASES[case_id], tmp_path)
+    repo = tmp_path / "invoice"
+    materialize(CASES[case_id], repo)
     command = (
         "from invoice_handler import handle; print(handle([100])['total'], handle([99])['total'])"
     )
     result = subprocess.run(
         [sys.executable, "-B", "-c", command],
-        cwd=tmp_path,
+        cwd=repo,
         text=True,
         check=True,
         capture_output=True,

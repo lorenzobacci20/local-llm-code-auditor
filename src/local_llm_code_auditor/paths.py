@@ -10,6 +10,16 @@ from pathlib import Path
 
 _SKIP_DIRS = {".git", "bin", "obj", "node_modules", ".venv", "venv"}
 
+# Mask a whole file before any head/tail sampling. Drop oversized inputs instead
+# of processing a secret whose delimiters might lie outside a partial read.
+MAX_EVIDENCE_FILE_BYTES = 2 * 1024 * 1024
+
+
+def read_evidence_file(path: Path) -> bytes | None:
+    with path.open("rb") as source:
+        data = source.read(MAX_EVIDENCE_FILE_BYTES + 1)
+    return data if len(data) <= MAX_EVIDENCE_FILE_BYTES else None
+
 
 def local_path(root: Path, path: Path, *, directory: bool = False) -> bool:
     try:

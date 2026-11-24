@@ -154,3 +154,14 @@ def test_adaptive_source_budget_shrinks_for_large_base_prompt():
     )
 
     assert 0 <= budget < 20_000
+
+
+def test_oversized_source_is_skipped_before_redaction_and_sampling(tmp_path):
+    from local_llm_code_auditor.paths import MAX_EVIDENCE_FILE_BYTES
+
+    repo = tmp_path / "repo"
+    _init_repo(repo)
+    (repo / "giant.py").write_bytes(b"x" * (MAX_EVIDENCE_FILE_BYTES + 1))
+    review = collect(repo)
+    assert review.candidate_files == ("giant.py",)
+    assert review.truncated and not review.files

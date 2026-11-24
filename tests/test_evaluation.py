@@ -256,3 +256,28 @@ def test_paired_mode_requires_local_model_and_enabled_critic(tmp_path):
     with pytest.raises(SystemExit):
         evaluate.main(["--llm", "--paired", "--critic", "off", "--output", str(tmp_path / "b")])
     assert list(tmp_path.iterdir()) == []
+
+
+def test_suite_budget_marks_remaining_cases_without_starting_them(monkeypatch, tmp_path):
+    from types import SimpleNamespace
+
+    now = [0.0]
+    monkeypatch.setattr(evaluate, "time", SimpleNamespace(monotonic=lambda: now[0]))
+
+    def one_case(case, destination, args, deadline):
+        assert case["id"] == "c01"
+        now[0] = deadline
+        return {"case_id": case["id"], "status": "COMPLETE", "report": None}
+
+    monkeypatch.setattr(evaluate, "run_case", one_case)
+    destination = tmp_path / "run"
+    assert (
+        evaluate.main(
+            ["--case", "c01", "--case", "c02", "--suite-timeout", "1", "--output", str(destination)]
+        )
+        == 1
+    )
+    manifest = json.loads((destination / "manifest.json").read_text())
+    assert [case["status"] for case in manifest["cases"]] == ["COMPLETE", "NOT_STARTED"]
+    assert manifest["cases"][1]["error"]["type"] == "SUITE_TIMEOUT"
+    assert not (destination / "c02").exists()
