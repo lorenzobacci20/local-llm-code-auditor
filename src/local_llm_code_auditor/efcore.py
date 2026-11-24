@@ -11,6 +11,14 @@ from .static_analysis import StaticFinding, relative_path
 _EF_PACKAGE_PREFIX = "microsoft.entityframeworkcore"
 _DBCONTEXT_RE = re.compile(r"\bclass\s+\w+\s*:\s*[^{\n]*\bDbContext\b")
 _MIGRATION_RE = re.compile(r"^(\d{8,})_(.+)\.cs$", re.IGNORECASE)
+_CS_NONCODE = re.compile(
+    r'//[^\n]*|/\*.*?(?:\*/|\Z)|(?P<raw>"{3,}).*?(?P=raw)|'
+    r'@"(?:[^"]|"")*"|"(?:\\.|[^"\\\n])*"|\'(?:\\.|[^\'\\\n])*\'',
+    re.DOTALL,
+)
+_THROW_NOT_IMPLEMENTED = re.compile(
+    r"\bthrow\s+new\s+(?:(?:global::)?System\s*\.\s*)?NotImplementedException\s*\("
+)
 
 
 @dataclass(slots=True)
@@ -128,14 +136,14 @@ def audit(repo: Path, git_status: str = "") -> EfCoreAudit:
                 text = source.read_text(encoding="utf-8", errors="replace")
             except OSError:
                 text = ""
-            if "throw new NotImplementedException" in text:
+            if _THROW_NOT_IMPLEMENTED.search(_CS_NONCODE.sub(" ", text)):
                 findings.append(
                     StaticFinding(
                         "EF Core",
                         "HIGH",
                         "EF_MIGRATION_NOT_IMPLEMENTED",
                         rel,
-                        "Migration contains `throw new NotImplementedException`, which would make migration execution fail.",
+                        "Migration source contains a NotImplementedException throw. Executing that path would fail.",
                     )
                 )
 
