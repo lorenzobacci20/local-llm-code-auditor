@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "findings": [],
+  "repository": "sample-app",
+  "head": "df68f4aee940",
+  "model": "qwen3.8:27b",
+  "num_ctx": 8192,
+  "num_predict": 3072,
+  "context_status": "DISABLED",
+  "pipeline": {
+    "audit": "COMPLETE",
+    "critic": "COMPLETE",
+    "selector": "DISABLED",
+    "final_source": "CRITIC"
+  },
+  "stages": {
+    "audit": {
+      "status": "COMPLETE",
+      "input_clipped": false,
+      "done_reason": "stop",
+      "prompt_tokens": 1683,
+      "output_tokens": 1344,
+      "duration_ns": 84934815500,
+      "tokens_per_second": 16.069036406362784
+    },
+    "critic": {
+      "status": "COMPLETE",
+      "input_clipped": false,
+      "done_reason": "stop",
+      "prompt_tokens": 1458,
+      "output_tokens": 1440,
+      "duration_ns": 90664723000,
+      "tokens_per_second": 16.378998375112367
+    },
+    "selector": {
+      "status": "DISABLED",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    }
+  },
+  "files": [
+    "Program.cs",
+    "Services/PricingService.cs"
+  ],
+  "followup_files": [],
+  "selector_paths_offered": 0,
+  "analysis": "## Verdict\n\nWARNING\n\n## Findings\n\n- MEDIUM | Services/PricingService.cs | Guard is `if (quantity < 0)` but the method's own doc-comment states \"strictly positive quantity\" and \"Invalid arguments are rejected with ArgumentOutOfRangeException\"; `quantity == 0` passes the guard and reaches `total / quantity` | The zero-quantity case is not rejected by the input guard, so the method violates its documented contract. Because `Program.cs` maps `/quote` directly to `Calculate` with no exception handler, a caller supplying `quantity=0` triggers an unhandled `System.DivideByZeroException` (decimal division by zero), producing a 500 Internal Server Error instead of the expected 400 Bad Request | Change the guard from `if (quantity < 0)` to `if (quantity <= 0)` so that zero is rejected with `ArgumentOutOfRangeException`, consistent with the method's documented behavior and the API's expected error contract\n\n## Suggested actions\n\n- In `Services/PricingService.cs`, update the quantity guard to `if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity));` so that zero is treated as an invalid argument per the method's documented contract, preventing an unhandled `DivideByZeroException` and the resulting 500 response from the `/quote` endpoint.",
+  "draft": "## Verdict\n\nWARNING\n\n## Findings\n\n- MEDIUM | Services/PricingService.cs | Guard checks `quantity < 0` but the documented contract requires \"strictly positive quantity\"; `quantity == 0` passes the guard and reaches `total / quantity`, which throws `System.OverflowException` (decimal divide-by-zero) rather than the documented `ArgumentOutOfRangeException` | The zero-quantity case is not rejected by the input guard, so the method violates its own stated contract and the API endpoint `/quote` returns an unhandled 500 Internal Server Error instead of a 400 Bad Request when a caller supplies `quantity=0` | Change the guard from `if (quantity < 0)` to `if (quantity <= 0)` so that zero is rejected with `ArgumentOutOfRangeException` consistent with the method's documented behavior and the API's expected error contract\n\n## Suggested actions\n\n- In `Services/PricingService.cs`, update the quantity guard to `if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity));` so that zero is treated as an invalid argument per the method's documented contract, preventing an unhandled `OverflowException` and the resulting 500 response from the `/quote` endpoint.",
+  "revision": "## Verdict\n\nWARNING\n\n## Findings\n\n- MEDIUM | Services/PricingService.cs | Guard is `if (quantity < 0)` but the method's own doc-comment states \"strictly positive quantity\" and \"Invalid arguments are rejected with ArgumentOutOfRangeException\"; `quantity == 0` passes the guard and reaches `total / quantity` | The zero-quantity case is not rejected by the input guard, so the method violates its documented contract. Because `Program.cs` maps `/quote` directly to `Calculate` with no exception handler, a caller supplying `quantity=0` triggers an unhandled `System.DivideByZeroException` (decimal division by zero), producing a 500 Internal Server Error instead of the expected 400 Bad Request | Change the guard from `if (quantity < 0)` to `if (quantity <= 0)` so that zero is rejected with `ArgumentOutOfRangeException`, consistent with the method's documented behavior and the API's expected error contract\n\n## Suggested actions\n\n- In `Services/PricingService.cs`, update the quantity guard to `if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity));` so that zero is treated as an invalid argument per the method's documented contract, preventing an unhandled `DivideByZeroException` and the resulting 500 response from the `/quote` endpoint.",
+  "markdown_sha256": "a5a292032ea84fa6270c98a3ec0a159b2274aa456c1243b820b30973077b1188"
+}

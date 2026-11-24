@@ -1,0 +1,114 @@
+{
+  "schema_version": 2,
+  "dataset_version": 2,
+  "dataset_sha256": "f60265f40c97506c70c94280d50fc3c5b3d821573d48088c18da81469cb0a6ad",
+  "software": {
+    "commit": "ab280172ff91037bb78cf3a2296889cf38793f1a",
+    "dirty": false,
+    "package_sha256": "84a602b4ac52d2fd5bbb03f44045a09dd599872d1df7685327cea0fef52f1a6c"
+  },
+  "auditor_version": "0.2.0",
+  "runner_sha256": "a3410b25f9591a54a2e85cf1c021c7b967d17ad73832b350902fa4b0d898f225",
+  "started_at": "2026-11-24T12:53:53.681095+00:00",
+  "mode": "llm",
+  "settings": {
+    "model": "qwen2.5-coder:14b",
+    "thinking": "auto",
+    "critic": "on",
+    "selector": "off",
+    "paired": true,
+    "num_ctx": 8192,
+    "num_predict": 1024,
+    "timeout": 120,
+    "suite_timeout": 120
+  },
+  "ollama": {
+    "version": "0.40.18",
+    "model_digest": "9ec8897f747e246e970bc5cfdda85d22f1123dc2e3d34978a010a75968716849"
+  },
+  "llm_quality": "NOT_EVALUATED",
+  "cases": [
+    {
+      "case_id": "c19",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "report": "c19/reports/sample-app/2026-11-24_135359.md",
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "DISABLED",
+        "audit": "COMPLETE",
+        "critic": "COMPLETE",
+        "final_source": "CRITIC"
+      },
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "llm_quality": "NOT_EVALUATED",
+      "error": null,
+      "input_files_sha256": {
+        "amounts.py": "4b23d7e3b7bb95ce763a02e189c08d8d1db649f40e3cb6e9d0cab9e27060b6bf",
+        "invoice_handler.py": "4e6cb6a0c7b4acd959d5cace1e9e715b9e0d64dcf4e25774ed076428eb2f4205",
+        "invoice_service.py": "2c3eaffc03af6f70e08a2268b4d49bf81aabc0b09edd73bceb8caf5cb1528e30",
+        "receipt_mapper.py": "1157a0e291c56b42ef53a59fc646fe6c7d9bbf0eed82a923607923c0b6eecd4b",
+        "receipt_worker.py": "5bf4c5f16f0ca408e512840c0f55ca6ff086531bf25c7d298452fff43777e3c8",
+        "rounding.py": "076259d774f6e96343b8552fbd200101200f66668c90ff97a4191448326232ee"
+      },
+      "structured_report": "c19/reports/sample-app/2026-11-24_135359.json",
+      "files": [
+        "invoice_handler.py",
+        "invoice_service.py",
+        "receipt_worker.py"
+      ],
+      "followup_files": [],
+      "stages": {
+        "audit": {
+          "status": "COMPLETE",
+          "input_clipped": false,
+          "done_reason": "stop",
+          "prompt_tokens": 1626,
+          "output_tokens": 85,
+          "duration_ns": 2585538600,
+          "tokens_per_second": 41.387282223772765
+        },
+        "critic": {
+          "status": "COMPLETE",
+          "input_clipped": false,
+          "done_reason": "stop",
+          "prompt_tokens": 1239,
+          "output_tokens": 47,
+          "duration_ns": 1467130700,
+          "tokens_per_second": 42.74658641222444
+        },
+        "selector": {
+          "status": "DISABLED",
+          "input_clipped": false,
+          "done_reason": null,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "duration_ns": null,
+          "tokens_per_second": null
+        }
+      },
+      "analysis_sha256": "8f2e108a89bcc2ad1bf6cc15d203da1dd9b0cc75b81881f13237a9c2ae88b0c7",
+      "selector_target_read": false,
+      "memory_after_case": {
+        "loaded_bytes": 10425372507,
+        "vram_bytes": 10425372507
+      },
+      "pair": {
+        "draft_sha256": "b7ed852648dba0c261428d5ea6b1d996497a976faa1c9e68cd7f3996d14dc442",
+        "revision_sha256": "8f2e108a89bcc2ad1bf6cc15d203da1dd9b0cc75b81881f13237a9c2ae88b0c7"
+      },
+      "elapsed_seconds": 6.093
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "complete": 1
+  },
+  "ground_truth_sha256": "ea17a1b760a38b0ea6d50ebeca08a6b590de7bddb5d1d668daaf629b0fe9a243"
+}

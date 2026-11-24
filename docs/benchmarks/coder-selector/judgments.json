@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "dataset_sha256": "f60265f40c97506c70c94280d50fc3c5b3d821573d48088c18da81469cb0a6ad",
+  "reviews": [
+    {
+      "case_id": "c19",
+      "stage": "draft",
+      "artifact_sha256": "958e19472ec391a8a52670d47d565318b85cf7c745f8729514ec8b266f436672",
+      "status": "pending",
+      "reviewer": null,
+      "findings": [],
+      "missed_defects": [],
+      "notes": ""
+    },
+    {
+      "case_id": "c19",
+      "stage": "revision",
+      "artifact_sha256": "4c61bbdd5ef1d2c17913b3e553c52a490c18b65275f8e61ae0ee5d7e20e5815d",
+      "status": "pending",
+      "reviewer": null,
+      "findings": [],
+      "missed_defects": [],
+      "notes": ""
+    }
+  ]
+}

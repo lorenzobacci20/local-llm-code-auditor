@@ -1,0 +1,641 @@
+{
+  "dataset_version": 2,
+  "dataset_sha256": "f60265f40c97506c70c94280d50fc3c5b3d821573d48088c18da81469cb0a6ad",
+  "auditor_version": "0.2.0",
+  "runner_sha256": "a3410b25f9591a54a2e85cf1c021c7b967d17ad73832b350902fa4b0d898f225",
+  "software": {
+    "commit": "ab280172ff91037bb78cf3a2296889cf38793f1a",
+    "dirty": false,
+    "package_sha256": "84a602b4ac52d2fd5bbb03f44045a09dd599872d1df7685327cea0fef52f1a6c"
+  },
+  "started_at": "2026-11-24T13:00:31.173981+00:00",
+  "mode": "deterministic",
+  "summary": {
+    "total": 22,
+    "complete": 22
+  },
+  "cases": [
+    {
+      "case_id": "c01",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [
+          "ASPNET_PROD_DETAILED_ERRORS",
+          "ASPNET_PROD_LOCALHOST",
+          "ASPNET_PROD_VERBOSE_LOGGING"
+        ],
+        "observed_rule_ids": [
+          "ASPNET_PROD_DETAILED_ERRORS",
+          "ASPNET_PROD_LOCALHOST",
+          "ASPNET_PROD_VERBOSE_LOGGING"
+        ],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.422,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "input_files_sha256": {
+        "appsettings.Production.json": "eda89711e502eaac1927b8089c15e54dfa5881cdfd7bee18c36e118083adc3a4",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "89ec2bcb36c02cb97c381f34690ef639713c39abba7585772cd27a2e7ac18c39"
+      }
+    },
+    {
+      "case_id": "c02",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.266,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "input_files_sha256": {
+        "appsettings.Production.json": "56b60726ac4984d88330dbf5dbd238ff873f9763788204806f6d5896e509701a",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "89ec2bcb36c02cb97c381f34690ef639713c39abba7585772cd27a2e7ac18c39"
+      }
+    },
+    {
+      "case_id": "c03",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.203,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "input_files_sha256": {
+        "appsettings.Production.json": "56b60726ac4984d88330dbf5dbd238ff873f9763788204806f6d5896e509701a",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "bdae40d693fe9982c243a61ec50275e2ad0ae8c3544039fc1ca81081091510ad"
+      }
+    },
+    {
+      "case_id": "c04",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.453,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "input_files_sha256": {
+        "appsettings.Production.json": "56b60726ac4984d88330dbf5dbd238ff873f9763788204806f6d5896e509701a",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "8c31f7bc46b8e148a25e133bd4ac63cc33398a0203c2494d1f3380393dfd05c1"
+      }
+    },
+    {
+      "case_id": "c05",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.469,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "input_files_sha256": {
+        "appsettings.Production.json": "56b60726ac4984d88330dbf5dbd238ff873f9763788204806f6d5896e509701a",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "07a17e6c636b77282801ef35e4041725d088bf958adc0a1405969b51399a2760"
+      }
+    },
+    {
+      "case_id": "c06",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.359,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "input_files_sha256": {
+        "appsettings.Production.json": "56b60726ac4984d88330dbf5dbd238ff873f9763788204806f6d5896e509701a",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "ecf20f50a961ed98e8dbb424f99a4df30800310bccb217ed64b7d499de99ed7d"
+      }
+    },
+    {
+      "case_id": "c07",
+      "status": "COMPLETE",
+      "cli_returncode": 1,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [
+          "EF_MIGRATION_NOT_IMPLEMENTED"
+        ],
+        "observed_rule_ids": [
+          "EF_MIGRATION_NOT_IMPLEMENTED"
+        ],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.36,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [],
+      "input_files_sha256": {
+        "Catalog.csproj": "53b3a1fb615a23a43e76459bb99e860b47257ede7db1858b2670acc8597ae013",
+        "Migrations/202501010900_AddLabel.cs": "efceee19450b5bab92c79df040c9b65b8fad792760876dc46e48fe55334f9f9f",
+        "Migrations/CatalogModelSnapshot.cs": "38099b63de7b75f1669aba0b629c54e6ec72faff6989c0db45b8ce9205a44898"
+      }
+    },
+    {
+      "case_id": "c08",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.328,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [],
+      "input_files_sha256": {
+        "Catalog.csproj": "53b3a1fb615a23a43e76459bb99e860b47257ede7db1858b2670acc8597ae013",
+        "Migrations/202501010900_AddLabel.cs": "9c17a22a5ff86277ae4cec00a1f6818a052ecacf3e6418770f292b96ea246db4",
+        "Migrations/CatalogModelSnapshot.cs": "38099b63de7b75f1669aba0b629c54e6ec72faff6989c0db45b8ce9205a44898"
+      }
+    },
+    {
+      "case_id": "c09",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.079,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "labels.py"
+      ],
+      "input_files_sha256": {
+        "labels.py": "5bcf89e473bd9036b61b918f53574d3af76fbe22906c31db2e60aac9905dffc9"
+      }
+    },
+    {
+      "case_id": "c10",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.187,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "labels.py"
+      ],
+      "input_files_sha256": {
+        "labels.py": "b2c5db69ba1d1dc3dc522ae9e09825ffafd1b78f730d1cca5a7fe2fa0bb76239"
+      }
+    },
+    {
+      "case_id": "c11",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.343,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "quantities.py"
+      ],
+      "input_files_sha256": {
+        "quantities.py": "9703a171f4d18ecf6f26131a3bc65845ff3bc9efa1884bd3ba8dd5a37d05efd6"
+      }
+    },
+    {
+      "case_id": "c12",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.204,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "quantities.py"
+      ],
+      "input_files_sha256": {
+        "quantities.py": "a3a9931480da9cec921bca669c0fc09b87ec738637d018739fe2492d9bc4dfc6"
+      }
+    },
+    {
+      "case_id": "c13",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.468,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "reservations.py"
+      ],
+      "input_files_sha256": {
+        "reservations.py": "348f87be2ae33d4aee1acb9cfe94d6d77ad6525ff802d7a8d2071ef329325483"
+      }
+    },
+    {
+      "case_id": "c14",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.344,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "reservations.py"
+      ],
+      "input_files_sha256": {
+        "reservations.py": "552cd4b2ab8807b1d348086f5b61da13be5fe337684fcb4c861c9f310b9f363b"
+      }
+    },
+    {
+      "case_id": "c15",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.203,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "ledger.py"
+      ],
+      "input_files_sha256": {
+        "ledger.py": "9f28fc639596bf399d188ee174489c194fbd4677989f8cad37123321ff0c3a44"
+      }
+    },
+    {
+      "case_id": "c16",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.141,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "ledger.py"
+      ],
+      "input_files_sha256": {
+        "ledger.py": "1e6261bcb6be453ddd0308114f8c8671a302d94137a81f7c469b1980b911444a"
+      }
+    },
+    {
+      "case_id": "c17",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 2.39,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "exports.py"
+      ],
+      "input_files_sha256": {
+        "exports.py": "3e5ebefcbe2e4301fde5fab805384e8ce64abe0557a332612579dbd7c7c654f6"
+      }
+    },
+    {
+      "case_id": "c18",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 2.141,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "exports.py"
+      ],
+      "input_files_sha256": {
+        "exports.py": "3a46801dbc372bb51951d5e3f4809fcf985801282614d46c63430a2c3131a841"
+      }
+    },
+    {
+      "case_id": "c19",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 2.156,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "invoice_handler.py",
+        "invoice_service.py",
+        "receipt_worker.py"
+      ],
+      "input_files_sha256": {
+        "amounts.py": "4b23d7e3b7bb95ce763a02e189c08d8d1db649f40e3cb6e9d0cab9e27060b6bf",
+        "invoice_handler.py": "4e6cb6a0c7b4acd959d5cace1e9e715b9e0d64dcf4e25774ed076428eb2f4205",
+        "invoice_service.py": "2c3eaffc03af6f70e08a2268b4d49bf81aabc0b09edd73bceb8caf5cb1528e30",
+        "receipt_mapper.py": "1157a0e291c56b42ef53a59fc646fe6c7d9bbf0eed82a923607923c0b6eecd4b",
+        "receipt_worker.py": "5bf4c5f16f0ca408e512840c0f55ca6ff086531bf25c7d298452fff43777e3c8",
+        "rounding.py": "076259d774f6e96343b8552fbd200101200f66668c90ff97a4191448326232ee"
+      }
+    },
+    {
+      "case_id": "c20",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 2.516,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "invoice_handler.py",
+        "invoice_service.py",
+        "receipt_worker.py"
+      ],
+      "input_files_sha256": {
+        "amounts.py": "4b23d7e3b7bb95ce763a02e189c08d8d1db649f40e3cb6e9d0cab9e27060b6bf",
+        "invoice_handler.py": "4e6cb6a0c7b4acd959d5cace1e9e715b9e0d64dcf4e25774ed076428eb2f4205",
+        "invoice_service.py": "2c3eaffc03af6f70e08a2268b4d49bf81aabc0b09edd73bceb8caf5cb1528e30",
+        "receipt_mapper.py": "1157a0e291c56b42ef53a59fc646fe6c7d9bbf0eed82a923607923c0b6eecd4b",
+        "receipt_worker.py": "5bf4c5f16f0ca408e512840c0f55ca6ff086531bf25c7d298452fff43777e3c8",
+        "rounding.py": "a48b1e475e0afa43b509bb22db294d2422f1be96741ee3237a4777df85e72aa0"
+      }
+    },
+    {
+      "case_id": "c21",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 3.109,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "approvals.py"
+      ],
+      "input_files_sha256": {
+        "approvals.py": "48733bcabc7ca5a6025e577345d2e4107a9fdb0acce19b64dca490b82a6875ce"
+      }
+    },
+    {
+      "case_id": "c22",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "elapsed_seconds": 2.297,
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "SKIPPED_NO_LLM",
+        "audit": "SKIPPED",
+        "critic": "SKIPPED_NO_LLM",
+        "final_source": "NONE"
+      },
+      "files": [
+        "windows.py"
+      ],
+      "input_files_sha256": {
+        "windows.py": "ca7b1928df5caef0cd6d3ffc2691c9d8fb5a999f153c56416858123851a3610e"
+      }
+    }
+  ]
+}

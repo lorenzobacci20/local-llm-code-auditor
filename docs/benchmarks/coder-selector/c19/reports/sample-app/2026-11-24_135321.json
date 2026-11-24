@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "findings": [
+    {
+      "id": "LLM-8234eca0b2014860",
+      "category": "model_review",
+      "origin": "llm",
+      "severity": "INFO",
+      "file": "None",
+      "location": null,
+      "evidence": "None",
+      "description": "No actionable defects were established in the reviewed evidence.",
+      "consequence": "No immediate risk.",
+      "recommendation": "No action required.",
+      "verification": "unverified"
+    }
+  ],
+  "repository": "sample-app",
+  "head": "4449c80a8e6b",
+  "model": "qwen2.5-coder:14b",
+  "num_ctx": 8192,
+  "num_predict": 1024,
+  "context_status": "DISABLED",
+  "pipeline": {
+    "audit": "COMPLETE",
+    "critic": "COMPLETE",
+    "selector": "COMPLETE",
+    "final_source": "CRITIC"
+  },
+  "stages": {
+    "audit": {
+      "status": "COMPLETE",
+      "input_clipped": false,
+      "done_reason": "stop",
+      "prompt_tokens": 1828,
+      "output_tokens": 81,
+      "duration_ns": 2706203200,
+      "tokens_per_second": 41.151866135519704
+    },
+    "critic": {
+      "status": "COMPLETE",
+      "input_clipped": false,
+      "done_reason": "stop",
+      "prompt_tokens": 1437,
+      "output_tokens": 48,
+      "duration_ns": 1872787100,
+      "tokens_per_second": 41.4409358744685
+    },
+    "selector": {
+      "status": "COMPLETE",
+      "input_clipped": false,
+      "done_reason": "stop",
+      "prompt_tokens": 951,
+      "output_tokens": 20,
+      "duration_ns": 1143638300,
+      "tokens_per_second": 42.90749787071542
+    }
+  },
+  "files": [
+    "invoice_handler.py",
+    "invoice_service.py",
+    "receipt_worker.py",
+    "amounts.py",
+    "receipt_mapper.py",
+    "rounding.py"
+  ],
+  "followup_files": [
+    "amounts.py",
+    "receipt_mapper.py",
+    "rounding.py"
+  ],
+  "selector_paths_offered": 3,
+  "analysis": "## Verdict\nGO\n\n## Findings\n- INFO | None | None | No actionable defects were established in the reviewed evidence. | No immediate risk. | No action required.\n\n## Suggested actions\n- No action required.",
+  "draft": "## Verdict\nGO\n\n## Findings\n- LOW | invoice_service.py | \"\"\"Return the sum of valid lines, less a one-unit credit on totals of at least 100.\"\"\" | The docstring for the `invoice_total` function is clear and describes the function's behavior. | No immediate risk. | No action required.\n\n## Suggested actions\n- No action required.",
+  "revision": "## Verdict\nGO\n\n## Findings\n- INFO | None | None | No actionable defects were established in the reviewed evidence. | No immediate risk. | No action required.\n\n## Suggested actions\n- No action required.",
+  "markdown_sha256": "fc208ce4a6b50a7b8e7db7bdfae3bed40dea23792f7af9389ec2feca01153b21"
+}

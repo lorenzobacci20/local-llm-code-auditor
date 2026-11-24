@@ -1,0 +1,112 @@
+{
+  "schema_version": 2,
+  "dataset_version": 2,
+  "dataset_sha256": "f60265f40c97506c70c94280d50fc3c5b3d821573d48088c18da81469cb0a6ad",
+  "software": {
+    "commit": "ab280172ff91037bb78cf3a2296889cf38793f1a",
+    "dirty": false,
+    "package_sha256": "84a602b4ac52d2fd5bbb03f44045a09dd599872d1df7685327cea0fef52f1a6c"
+  },
+  "auditor_version": "0.2.0",
+  "runner_sha256": "a3410b25f9591a54a2e85cf1c021c7b967d17ad73832b350902fa4b0d898f225",
+  "started_at": "2026-11-24T13:01:25.527495+00:00",
+  "mode": "llm",
+  "settings": {
+    "model": "gpt-oss:20b",
+    "thinking": "auto",
+    "critic": "on",
+    "selector": "off",
+    "paired": true,
+    "num_ctx": 8192,
+    "num_predict": 3072,
+    "timeout": 300,
+    "suite_timeout": 300
+  },
+  "ollama": {
+    "version": "0.40.18",
+    "model_digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7"
+  },
+  "llm_quality": "NOT_EVALUATED",
+  "cases": [
+    {
+      "case_id": "c03",
+      "status": "ERROR",
+      "cli_returncode": 1,
+      "report": "c03/reports/sample-app/2026-11-24_140221.md",
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "DISABLED",
+        "audit": "PARTIAL",
+        "critic": "SKIPPED_AUDIT_PARTIAL",
+        "final_source": "DRAFT"
+      },
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "llm_quality": "NOT_EVALUATED",
+      "error": {
+        "type": "CLI_ERROR",
+        "message": "CLI exited 1"
+      },
+      "input_files_sha256": {
+        "appsettings.Production.json": "56b60726ac4984d88330dbf5dbd238ff873f9763788204806f6d5896e509701a",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "bdae40d693fe9982c243a61ec50275e2ad0ae8c3544039fc1ca81081091510ad"
+      },
+      "structured_report": "c03/reports/sample-app/2026-11-24_140221.json",
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "followup_files": [],
+      "stages": {
+        "audit": {
+          "status": "PARTIAL",
+          "input_clipped": false,
+          "done_reason": "length",
+          "prompt_tokens": 1691,
+          "output_tokens": 3072,
+          "duration_ns": 54441960900,
+          "tokens_per_second": 85.48126340862103
+        },
+        "critic": {
+          "status": "SKIPPED_AUDIT_PARTIAL",
+          "input_clipped": false,
+          "done_reason": null,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "duration_ns": null,
+          "tokens_per_second": null
+        },
+        "selector": {
+          "status": "DISABLED",
+          "input_clipped": false,
+          "done_reason": null,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "duration_ns": null,
+          "tokens_per_second": null
+        }
+      },
+      "analysis_sha256": "57b86f0c1b8f42ff1ed1e0634766be5eebcfadd369767f00e709189462654260",
+      "memory_after_case": {
+        "loaded_bytes": 12743815986,
+        "vram_bytes": 12743815986
+      },
+      "pair": {
+        "draft_sha256": "57b86f0c1b8f42ff1ed1e0634766be5eebcfadd369767f00e709189462654260"
+      },
+      "elapsed_seconds": 56.407
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "complete": 0
+  },
+  "ground_truth_sha256": "c12e78a1c87d08d88ae55ca35af23c2527e536e027f0d07f73ad77b4bd89ba81"
+}

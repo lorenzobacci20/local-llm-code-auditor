@@ -1,0 +1,110 @@
+{
+  "schema_version": 2,
+  "dataset_version": 2,
+  "dataset_sha256": "f60265f40c97506c70c94280d50fc3c5b3d821573d48088c18da81469cb0a6ad",
+  "software": {
+    "commit": "ab280172ff91037bb78cf3a2296889cf38793f1a",
+    "dirty": false,
+    "package_sha256": "84a602b4ac52d2fd5bbb03f44045a09dd599872d1df7685327cea0fef52f1a6c"
+  },
+  "auditor_version": "0.2.0",
+  "runner_sha256": "a3410b25f9591a54a2e85cf1c021c7b967d17ad73832b350902fa4b0d898f225",
+  "started_at": "2026-11-24T12:58:27.445012+00:00",
+  "mode": "llm",
+  "settings": {
+    "model": "qwen3.8:27b",
+    "thinking": "auto",
+    "critic": "on",
+    "selector": "off",
+    "paired": true,
+    "num_ctx": 8192,
+    "num_predict": 3072,
+    "timeout": 300,
+    "suite_timeout": 300
+  },
+  "ollama": {
+    "version": "0.40.18",
+    "model_digest": "22130167c4c20e20c7b71454612966ca8e8171e9b3cc8ab6ce8aa6cbfec79643"
+  },
+  "llm_quality": "NOT_EVALUATED",
+  "cases": [
+    {
+      "case_id": "c03",
+      "status": "COMPLETE",
+      "cli_returncode": 0,
+      "report": "c03/reports/sample-app/2026-11-24_140124.md",
+      "pipeline": {
+        "context": "DISABLED",
+        "selector": "DISABLED",
+        "audit": "COMPLETE",
+        "critic": "COMPLETE",
+        "final_source": "CRITIC"
+      },
+      "deterministic_oracle": {
+        "status": "PASS",
+        "expected_rule_ids": [],
+        "observed_rule_ids": [],
+        "missing_rule_ids": [],
+        "unexpected_rule_ids": []
+      },
+      "llm_quality": "NOT_EVALUATED",
+      "error": null,
+      "input_files_sha256": {
+        "appsettings.Production.json": "56b60726ac4984d88330dbf5dbd238ff873f9763788204806f6d5896e509701a",
+        "Program.cs": "cdad9be4edba9d2fd230afb02f2464d761afa2bedfd841b208cc07451158872e",
+        "SampleApp.csproj": "7819b30ac6eb6540f5b817f287e349fae141d913ad777b5b938984aed5d52ede",
+        "Services/PricingService.cs": "bdae40d693fe9982c243a61ec50275e2ad0ae8c3544039fc1ca81081091510ad"
+      },
+      "structured_report": "c03/reports/sample-app/2026-11-24_140124.json",
+      "files": [
+        "Program.cs",
+        "Services/PricingService.cs"
+      ],
+      "followup_files": [],
+      "stages": {
+        "audit": {
+          "status": "COMPLETE",
+          "input_clipped": false,
+          "done_reason": "stop",
+          "prompt_tokens": 1683,
+          "output_tokens": 1344,
+          "duration_ns": 84934815500,
+          "tokens_per_second": 16.069036406362784
+        },
+        "critic": {
+          "status": "COMPLETE",
+          "input_clipped": false,
+          "done_reason": "stop",
+          "prompt_tokens": 1458,
+          "output_tokens": 1440,
+          "duration_ns": 90664723000,
+          "tokens_per_second": 16.378998375112367
+        },
+        "selector": {
+          "status": "DISABLED",
+          "input_clipped": false,
+          "done_reason": null,
+          "prompt_tokens": null,
+          "output_tokens": null,
+          "duration_ns": null,
+          "tokens_per_second": null
+        }
+      },
+      "analysis_sha256": "4ba3ecd0997d3a1c4822ee46d9571db1615baaf46c3f687aa7f4c039cb6a9a4b",
+      "memory_after_case": {
+        "loaded_bytes": 18286693576,
+        "vram_bytes": 13396019771
+      },
+      "pair": {
+        "draft_sha256": "a919eada14189db2ca67d7bb4e14ff856cf0585ace1504aff8bdb7859897fccc",
+        "revision_sha256": "4ba3ecd0997d3a1c4822ee46d9571db1615baaf46c3f687aa7f4c039cb6a9a4b"
+      },
+      "elapsed_seconds": 177.531
+    }
+  ],
+  "summary": {
+    "total": 1,
+    "complete": 1
+  },
+  "ground_truth_sha256": "c12e78a1c87d08d88ae55ca35af23c2527e536e027f0d07f73ad77b4bd89ba81"
+}

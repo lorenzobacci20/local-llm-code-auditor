@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "findings": [],
+  "repository": "sample-app",
+  "head": "df68f4aee940",
+  "model": "gpt-oss:20b",
+  "num_ctx": 8192,
+  "num_predict": 3072,
+  "context_status": "DISABLED",
+  "pipeline": {
+    "audit": "PARTIAL",
+    "critic": "SKIPPED_AUDIT_PARTIAL",
+    "selector": "DISABLED",
+    "final_source": "DRAFT"
+  },
+  "stages": {
+    "audit": {
+      "status": "PARTIAL",
+      "input_clipped": false,
+      "done_reason": "length",
+      "prompt_tokens": 1691,
+      "output_tokens": 3072,
+      "duration_ns": 54441960900,
+      "tokens_per_second": 85.48126340862103
+    },
+    "critic": {
+      "status": "SKIPPED_AUDIT_PARTIAL",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    },
+    "selector": {
+      "status": "DISABLED",
+      "input_clipped": false,
+      "done_reason": null,
+      "prompt_tokens": null,
+      "output_tokens": null,
+      "duration_ns": null,
+      "tokens_per_second": null
+    }
+  },
+  "files": [
+    "Program.cs",
+    "Services/PricingService.cs"
+  ],
+  "followup_files": [],
+  "selector_paths_offered": 0,
+  "analysis": "## Verdict\nSTOP\n\n## Findings\n- **HIGH | Services/PricingService.cs | if (quantity < 0) throw new ArgumentOutOfRangeException(nameof(quantity)); return total / quantity; | Division by zero occurs when `quantity` is 0, causing a `DivideByZeroException`. | The API may crash or return a 500 error to the client. | Add a guard for `quantity == 0` and throw an appropriate exception (e.g., `ArgumentOutOfRangeException`).**\n- **INFO | Services/P",
+  "draft": "## Verdict\nSTOP\n\n## Findings\n- **HIGH | Services/PricingService.cs | if (quantity < 0) throw new ArgumentOutOfRangeException(nameof(quantity)); return total / quantity; | Division by zero occurs when `quantity` is 0, causing a `DivideByZeroException`. | The API may crash or return a 500 error to the client. | Add a guard for `quantity == 0` and throw an appropriate exception (e.g., `ArgumentOutOfRangeException`).**\n- **INFO | Services/P",
+  "revision": null,
+  "markdown_sha256": "980c7c4e9cd83b351705f4815821d9b4028ce6a99acb7b5c5c7bbe7607d82e2e"
+}
